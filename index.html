@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fichaje de Pasantes</title>
+<meta name="theme-color" content="#000e3d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Fichaje">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{
+  --bg:#f6f5f2; --card:#ffffff; --ink:#1c1b19; --muted:#6b6862;
+  --accent:#c05a2e; --accent-ink:#ffffff; --line:#e5e2db; --ok:#3a7d5c; --bad:#b3402e;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#171512; --card:#211f1c; --ink:#f2efe9; --muted:#a39d92; --line:#37342e;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#171512; --card:#211f1c; --ink:#f2efe9; --muted:#a39d92; --line:#37342e;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px); height:100%; overscroll-behavior:none; -webkit-tap-highlight-color:transparent;}
+button,input,select{touch-action:manipulation;}
+input,select{font-size:16px !important;}
+*{box-sizing:border-box;}
+body{
+  margin:0; height:100%; background:var(--bg); color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  display:flex; flex-direction:column;
+}
+header{
+  padding:16px 18px calc(12px); border-bottom:1px solid var(--line);
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+}
+h1{font-size:17px; margin:0; font-weight:600;}
+.tabbar{display:flex; border-top:1px solid var(--line); background:var(--card);}
+.tabbar button{
+  flex:1; border:none; background:transparent; color:var(--muted); font-size:12px; font-weight:600;
+  padding:10px 0 12px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:2px;
+}
+.tabbar button .ico{font-size:22px; line-height:1;}
+.tabbar button.active{color:var(--accent);}
+#btnInstalar{border:1px solid var(--accent); background:transparent; color:var(--accent); font-size:12px; font-weight:700; padding:7px 12px; border-radius:20px; cursor:pointer;}
+.reloj{text-align:center; padding:8px 0 20px;}
+.reloj .hora{font-size:48px; font-weight:700; letter-spacing:-.02em; font-variant-numeric:tabular-nums;}
+.reloj .fecha{font-size:14px; color:var(--muted); margin-top:2px; text-transform:capitalize;}
+.ios-hint{font-size:12px; color:var(--muted); text-align:center; margin-top:10px; display:none;}
+main{flex:1; overflow-y:auto; padding:18px; max-width:520px; width:100%; margin:0 auto;}
+.card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px; margin-bottom:14px;}
+label{display:block; font-size:12px; color:var(--muted); margin-bottom:6px; font-weight:600; text-transform:uppercase; letter-spacing:.03em;}
+select,input{
+  width:100%; padding:11px 12px; border-radius:9px; border:1px solid var(--line);
+  background:var(--bg); color:var(--ink); font-size:15px; margin-bottom:14px;
+}
+.btnrow{display:flex; gap:10px;}
+button.action{
+  flex:1; padding:14px; border-radius:10px; border:none; font-size:15px; font-weight:700; cursor:pointer;
+}
+.btn-in{background:var(--ok); color:#fff;}
+.btn-out{background:var(--bad); color:#fff;}
+button.action:disabled{opacity:.5;}
+button.link{background:none; border:none; color:var(--muted); font-size:12px; text-decoration:underline; cursor:pointer; padding:4px 0;}
+#status{margin-top:12px; font-size:13px; color:var(--muted); min-height:18px;}
+table{width:100%; border-collapse:collapse; font-size:13px;}
+th,td{text-align:left; padding:8px 6px; border-bottom:1px solid var(--line);}
+th{color:var(--muted); font-weight:600; font-size:11px; text-transform:uppercase;}
+.tag{display:inline-block; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:700;}
+.tag-in{background:rgba(58,125,92,.15); color:var(--ok);}
+.tag-out{background:rgba(179,64,46,.15); color:var(--bad);}
+.empty{color:var(--muted); font-size:13px; text-align:center; padding:20px 0;}
+.wrap{overflow-x:auto;}
+.hint{font-size:12px; color:var(--muted); margin-top:4px;}
+</style>
+</head>
+<body>
+<header>
+  <h1>🕐 Fichaje Pasantes</h1>
+  <button id="btnInstalar" style="display:none;">📲 Instalar app</button>
+</header>
+<main>
+  <section id="viewFichar">
+    <div class="reloj"><div class="hora" id="relojHora">--:--</div><div class="fecha" id="relojFecha"></div></div>
+    <div class="card">
+      <label for="nombre">Pasante</label>
+      <input id="nombre" list="listaNombres" placeholder="Tu nombre">
+      <datalist id="listaNombres"></datalist>
+      <label for="pin">Clave</label>
+      <input id="pin" type="password" inputmode="numeric" maxlength="6" placeholder="PIN de 4 a 6 dígitos">
+      <div class="btnrow">
+        <button class="action btn-in" id="btnEntrada">Marcar Entrada</button>
+        <button class="action btn-out" id="btnSalida">Marcar Salida</button>
+      </div>
+      <div id="status"></div>
+    </div>
+    <div class="ios-hint" id="iosHint">En iPhone: tocá Compartir y luego "Agregar a inicio" para instalar la app.</div>
+  </section>
+  <section id="viewPanel" style="display:none;">
+    <div class="card" id="panelLogin">
+      <label for="emailRRHH">Email de RRHH</label>
+      <input id="emailRRHH" type="email" placeholder="tu-email@empresa.com">
+      <label for="claveRRHH">Contraseña</label>
+      <input id="claveRRHH" type="password" placeholder="Contraseña">
+      <div class="btnrow">
+        <button class="action btn-in" id="btnEntrarRRHH" style="flex:none;">Entrar</button>
+      </div>
+      <div id="statusRRHH" class="hint"></div>
+    </div>
+    <div id="panelContent" style="display:none;">
+    <div class="card" id="alertaCard" style="display:none; border-color:var(--bad);">
+      <label style="color:var(--bad);">⚠️ Sin marcar salida</label>
+      <div id="listaAlertas" style="font-size:13px;"></div>
+    </div>
+    <div class="card">
+      <div class="btnrow" style="margin-bottom:14px;">
+        <label style="margin:0; flex:1;">Registros de hoy</label>
+        <button class="action btn-in" id="btnExportar" style="flex:none; padding:8px 14px; font-size:13px;">⬇️ Exportar CSV</button>
+      </div>
+      <div class="wrap">
+        <table id="tablaHoy"><thead><tr><th>Pasante</th><th>Área</th><th>Entrada</th><th>Salida</th><th>Horas</th><th>Ubicación</th></tr></thead><tbody></tbody></table>
+      </div>
+      <div class="empty" id="emptyHoy" style="display:none;">Todavía no hay fichajes hoy.</div>
+    </div>
+    <div class="card">
+      <label>Pasantes autorizados</label>
+      <input id="nuevoNombre" placeholder="Nombre del pasante">
+      <input id="nuevoPin" type="password" inputmode="numeric" maxlength="6" placeholder="Asignar PIN">
+      <input id="nuevoArea" placeholder="Área o sector">
+      <input id="nuevoHorario" placeholder="Horario asignado (ej. Lun a Vie 9 a 18)">
+      <label for="nuevoInicio" style="margin-bottom:4px;">Inicio de la pasantía</label>
+      <input id="nuevoInicio" type="date">
+      <label for="nuevoFin" style="margin-bottom:4px;">Fin de la pasantía</label>
+      <input id="nuevoFin" type="date">
+      <div class="btnrow">
+        <button class="action btn-in" id="btnAgregar" style="flex:none;">Agregar pasante</button>
+      </div>
+      <div class="hint" id="statusPasante"></div>
+      <div class="wrap" style="margin-top:12px;">
+        <table id="tablaPasantes"><thead><tr><th>Nombre</th><th>Área</th><th>Horario</th><th>Inicio</th><th>Fin</th></tr></thead><tbody></tbody></table>
+      </div>
+      <button class="link" id="btnSalirRRHH">Cerrar sesión de RRHH</button>
+    </div>
+    </div>
+  </section>
+</main>
+<nav class="tabbar">
+  <button id="tabFichar" class="active"><span class="ico">🕐</span>Fichar</button>
+  <button id="tabPanel"><span class="ico">📋</span>Panel RRHH</button>
+</nav>
+
+<!-- Cliente de Supabase (UMD, sirve para HTML plano sin build step) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+/* ============================================================
+   CONFIGURACIÓN — completá esto con los datos de TU proyecto
+   de Supabase antes de publicar (Project Settings > API).
+   La "anon key" está pensada para ser pública en el cliente;
+   la seguridad real la dan las políticas RLS del archivo
+   supabase-schema.sql, no el hecho de ocultar esta key.
+   ============================================================ */
+const SUPABASE_URL = "https://mxwyiiltvmcxayjwrqof.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_lHXjfWCanYeJqCuPSucX7A__3I2Rp0Y";
+
+const $=id=>document.getElementById(id);
+let sb=null;
+try{
+  if(SUPABASE_URL.includes('TU-PROYECTO') || SUPABASE_ANON_KEY.includes('TU-ANON-KEY')){
+    console.warn('Falta configurar SUPABASE_URL y SUPABASE_ANON_KEY en index.html');
+  }else{
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+}catch(e){console.error(e);}
+
+$('tabFichar').onclick=()=>{$('viewFichar').style.display='block';$('viewPanel').style.display='none';$('tabFichar').classList.add('active');$('tabPanel').classList.remove('active');};
+$('tabPanel').onclick=()=>{$('viewFichar').style.display='none';$('viewPanel').style.display='block';$('tabPanel').classList.add('active');$('tabFichar').classList.remove('active');};
+
+function todayKey(d=new Date()){return d.toISOString().slice(0,10);}
+function timeStr(iso){return new Date(iso).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});}
+
+/* ---------- Fichar (pasantes) ---------- */
+
+async function cargarDatalist(){
+  if(!sb)return;
+  const {data,error}=await sb.from('pasantes_publico').select('nombre');
+  if(error)return;
+  const lista=$('listaNombres');
+  lista.innerHTML='';
+  (data||[]).forEach(v=>{
+    const opt=document.createElement('option');
+    opt.value=v.nombre;
+    lista.appendChild(opt);
+  });
+}
+
+async function marcar(tipo){
+  const nombre=$('nombre').value.trim();
+  const pin=$('pin').value.trim();
+  const status=$('status');
+  if(!nombre||!pin){status.textContent='Completá nombre y clave.';status.style.color='var(--bad)';return;}
+  if(!sb){status.textContent='Falta configurar Supabase (revisá SUPABASE_URL/ANON_KEY en el código).';status.style.color='var(--bad)';return;}
+
+  const enviar=async(lat,lng)=>{
+    // La validación real del PIN ocurre DENTRO de la base de datos
+    // (función marcar_fichaje en supabase-schema.sql), así el PIN de
+    // cada pasante nunca viaja al navegador de otra persona.
+    const {data,error}=await sb.rpc('marcar_fichaje',{
+      p_nombre:nombre, p_pin:pin, p_tipo:tipo, p_lat:lat, p_lng:lng
+    });
+    if(error){status.textContent='Error al guardar. Probá de nuevo.';status.style.color='var(--bad)';return;}
+    if(!data||!data.ok){
+      const msg=data&&data.error==='pin_incorrecto' ? 'La clave no coincide.'
+        : data&&data.error==='pasante_no_encontrado' ? 'No encontramos ese nombre en la lista de pasantes autorizados.'
+        : 'No se pudo registrar el fichaje.';
+      status.textContent=msg;status.style.color='var(--bad)';return;
+    }
+    status.textContent=(tipo==='entrada'?'✅ Entrada registrada — ':'✅ Salida registrada — ')+data.nombre;
+    status.style.color='var(--ok)';
+    $('pin').value='';
+  };
+
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(
+      pos=>enviar(pos.coords.latitude,pos.coords.longitude),
+      ()=>enviar(null,null),
+      {timeout:4000}
+    );
+  }else{
+    enviar(null,null);
+  }
+}
+$('btnEntrada').onclick=()=>marcar('entrada');
+$('btnSalida').onclick=()=>marcar('salida');
+
+/* ---------- Panel RRHH (protegido con Supabase Auth) ---------- */
+
+$('btnEntrarRRHH').onclick=async()=>{
+  const s=$('statusRRHH');
+  if(!sb){s.textContent='Falta configurar Supabase.';s.style.color='var(--bad)';return;}
+  const email=$('emailRRHH').value.trim();
+  const password=$('claveRRHH').value;
+  s.textContent='Ingresando…';s.style.color='var(--muted)';
+  const {error}=await sb.auth.signInWithPassword({email,password});
+  if(error){s.textContent='Email o contraseña incorrectos.';s.style.color='var(--bad)';return;}
+  mostrarPanel();
+};
+
+$('btnSalirRRHH').onclick=async()=>{
+  if(sb)await sb.auth.signOut();
+  $('panelContent').style.display='none';
+  $('panelLogin').style.display='block';
+  $('claveRRHH').value='';
+};
+
+async function mostrarPanel(){
+  $('panelLogin').style.display='none';
+  $('panelContent').style.display='block';
+  await cargarPasantesAdmin();
+  await cargarHoy();
+  suscribirRealtime();
+}
+
+/* ---------- Alta de pasantes (requiere sesión RRHH por RLS) ---------- */
+
+async function agregarPasante(){
+  const nombre=$('nuevoNombre').value.trim();
+  const pin=$('nuevoPin').value.trim();
+  const area=$('nuevoArea').value.trim();
+  const horario=$('nuevoHorario').value.trim();
+  const fecha_inicio=$('nuevoInicio').value||null;
+  const fecha_fin=$('nuevoFin').value||null;
+  const status=$('statusPasante');
+  if(!nombre||!pin){status.textContent='Completá al menos nombre y PIN.';status.style.color='var(--bad)';return;}
+  if(!sb){status.textContent='No se pudo conectar.';status.style.color='var(--bad)';return;}
+  const id=nombre.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,'_');
+  const {error}=await sb.from('pasantes').upsert({id,nombre,pin,area,horario,fecha_inicio,fecha_fin});
+  if(error){status.textContent='Error al guardar (¿tenés la sesión de RRHH activa?).';status.style.color='var(--bad)';return;}
+  status.textContent='✅ Pasante agregado.';status.style.color='var(--ok)';
+  $('nuevoNombre').value='';$('nuevoPin').value='';$('nuevoArea').value='';$('nuevoHorario').value='';$('nuevoInicio').value='';$('nuevoFin').value='';
+  cargarPasantesAdmin();
+  cargarDatalist();
+}
+$('btnAgregar').onclick=agregarPasante;
+
+async function cargarPasantesAdmin(){
+  const {data,error}=await sb.from('pasantes').select('*').order('nombre');
+  if(error)return;
+  const tbody=$('tablaPasantes').querySelector('tbody');
+  tbody.innerHTML='';
+  pasantesArea={};
+  (data||[]).forEach(v=>{
+    pasantesArea[v.nombre]=v.area||'—';
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td>'+v.nombre+'</td><td>'+(v.area||'—')+'</td><td>'+(v.horario||'—')+'</td><td>'+(v.fecha_inicio||'—')+'</td><td>'+(v.fecha_fin||'—')+'</td>';
+    tbody.appendChild(tr);
+  });
+}
+
+/* ---------- Registros de hoy ---------- */
+
+function horasEntre(a,b){
+  const ms=new Date(b)-new Date(a);
+  if(ms<=0)return '—';
+  return (ms/3600000).toFixed(1)+' hs';
+}
+
+let filasHoy=[];
+let pasantesArea={};
+
+async function cargarHoy(){
+  const hoy=todayKey();
+  const {data,error}=await sb.from('fichajes').select('*').eq('dia',hoy).order('ts');
+  if(error)return;
+  renderHoy(data||[]);
+}
+
+function renderHoy(rows){
+  const porNombre={};
+  rows.forEach(v=>{
+    porNombre[v.nombre]=porNombre[v.nombre]||{};
+    if(v.tipo==='entrada'){porNombre[v.nombre].entrada=v.ts;porNombre[v.nombre].lat=v.ubicacion_lat;porNombre[v.nombre].lng=v.ubicacion_lng;}
+    else{porNombre[v.nombre].salida=v.ts;}
+  });
+  const tbody=$('tablaHoy').querySelector('tbody');
+  const names=Object.keys(porNombre).sort();
+  tbody.innerHTML='';
+  $('emptyHoy').style.display=names.length?'none':'block';
+  filasHoy=[];
+  const sinSalida=[];
+  names.forEach(n=>{
+    const r=porNombre[n];
+    const area=pasantesArea[n]||'—';
+    const horas=(r.entrada&&r.salida)?horasEntre(r.entrada,r.salida):'—';
+    const ubic=(r.lat!=null)?('<a href="https://maps.google.com/?q='+r.lat+','+r.lng+'" target="_blank">📍 ver</a>'):'—';
+    if(r.entrada&&!r.salida)sinSalida.push(n);
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td>'+n+'</td><td>'+area+'</td><td>'+(r.entrada?'<span class="tag tag-in">'+timeStr(r.entrada)+'</span>':'—')+'</td><td>'+(r.salida?'<span class="tag tag-out">'+timeStr(r.salida)+'</span>':'—')+'</td><td>'+horas+'</td><td>'+ubic+'</td>';
+    tbody.appendChild(tr);
+    filasHoy.push({nombre:n,area,entrada:r.entrada?timeStr(r.entrada):'',salida:r.salida?timeStr(r.salida):'',horas});
+  });
+  if(sinSalida.length){
+    $('alertaCard').style.display='block';
+    $('listaAlertas').textContent=sinSalida.join(', ')+' — todavía no marcaron salida hoy.';
+  }else{
+    $('alertaCard').style.display='none';
+  }
+}
+
+function suscribirRealtime(){
+  sb.channel('fichajes-hoy')
+    .on('postgres_changes',{event:'*',schema:'public',table:'fichajes'},()=>cargarHoy())
+    .subscribe();
+}
+
+function exportarCSV(){
+  let csv='Pasante,Area,Entrada,Salida,Horas\n';
+  filasHoy.forEach(f=>{
+    csv+=[f.nombre,f.area,f.entrada,f.salida,f.horas].map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')+'\n';
+  });
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='fichajes_'+todayKey()+'.csv';a.click();
+  URL.revokeObjectURL(url);
+}
+$('btnExportar').onclick=exportarCSV;
+
+/* ---------- Arranque ---------- */
+
+(async()=>{
+  if(!sb)return;
+  await cargarDatalist();
+  const {data:{session}}=await sb.auth.getSession();
+  if(session)mostrarPanel();
+  sb.auth.onAuthStateChange((_event,session)=>{
+    if(!session){
+      $('panelContent').style.display='none';
+      $('panelLogin').style.display='block';
+    }
+  });
+  // refresca el listado público de nombres si RRHH agrega/edita pasantes
+  sb.channel('pasantes-publico')
+    .on('postgres_changes',{event:'*',schema:'public',table:'pasantes'},()=>{cargarDatalist(); if($('panelContent').style.display==='block'){cargarPasantesAdmin();}})
+    .subscribe();
+})();
+
+/* Reloj en vivo */
+function tickReloj(){
+  const d=new Date();
+  $('relojHora').textContent=d.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+  $('relojFecha').textContent=d.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
+}
+tickReloj(); setInterval(tickReloj,10000);
+
+/* Botón "Instalar app" */
+let promptInstalar=null;
+const esStandalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault(); promptInstalar=e;
+  if(!esStandalone)$('btnInstalar').style.display='inline-block';
+});
+$('btnInstalar').onclick=async()=>{
+  if(!promptInstalar)return;
+  promptInstalar.prompt();
+  await promptInstalar.userChoice;
+  promptInstalar=null; $('btnInstalar').style.display='none';
+};
+window.addEventListener('appinstalled',()=>{$('btnInstalar').style.display='none';});
+if(/iphone|ipad|ipod/i.test(navigator.userAgent)&&!esStandalone)$('iosHint').style.display='block';
+
+/* Registra el service worker para que la app sea instalable (PWA) */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
