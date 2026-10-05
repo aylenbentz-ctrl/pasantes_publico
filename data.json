@@ -1,0 +1,58 @@
+{
+  "pasantes": [],
+  "fichajes": [],
+  "sedes": [
+    {
+      "id": 1,
+      "nombre": "Autos del Sur Sarandí",
+      "direccion": "GFT, Av. Bartolomé Mitre 2900, B1872 Sarandí, Provincia de Buenos Aires",
+      "localidad": "Sarandí",
+      "ubicacion_texto": "2900, Avenida Bartolomé Mitre, Sarandí, Partido de Avellaneda, Buenos Aires, 1872, Argentina",
+      "ubicacion_aprox": false,
+      "lat": -34.679446,
+      "lng": -58.345622,
+      "radio_m": 300,
+      "activa": true
+    },
+    {
+      "id": 2,
+      "nombre": "Autos del Sur Quilmes",
+      "direccion": "Av. Hipólito Yrigoyen 80, B1878 Quilmes, Provincia de Buenos Aires",
+      "localidad": "Quilmes",
+      "ubicacion_texto": "Ubicación cargada a mano",
+      "ubicacion_aprox": false,
+      "lat": -34.714073,
+      "lng": -58.267032,
+      "radio_m": 300,
+      "activa": true
+    },
+    {
+      "id": 3,
+      "nombre": "Autos del Sur Florencio Varela",
+      "direccion": "RP36 1161, B1888 Florencio Varela, Provincia de Buenos Aires",
+      "localidad": "Florencio Varela",
+      "ubicacion_texto": "Ubicación cargada a mano",
+      "ubicacion_aprox": false,
+      "lat": -34.784242,
+      "lng": -58.25892,
+      "radio_m": 300,
+      "activa": true
+    },
+    {
+      "id": 4,
+      "nombre": "Autos del Sur Roca",
+      "direccion": "Av. Roca 2149, B1872 Crucecita, Provincia de Buenos Aires",
+      "localidad": "Crucecita",
+      "ubicacion_texto": "2149, Avenida General Roca, Crucecita, Avellaneda, Partido de Avellaneda, Buenos Aires, 1870, Argentina",
+      "ubicacion_aprox": false,
+      "lat": -34.670325,
+      "lng": -58.348821,
+      "radio_m": 300,
+      "activa": true
+    }
+  ],
+  "seq": {
+    "fichajes": 0,
+    "sedes": 4
+  }
+}

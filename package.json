@@ -1,0 +1,12 @@
+{
+  "name": "fichaje-pasantes",
+  "version": "2.0.0",
+  "description": "Fichaje de pasantes - Autos del Sur (servidor de prueba local)",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "demo": "node server.js --demo",
+    "test": "node server.js --demo --sin-geocerca"
+  },
+  "engines": { "node": ">=18" }
+}

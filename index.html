@@ -3,158 +3,362 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Fichaje de Pasantes</title>
-<meta name="theme-color" content="#000e3d">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Fichaje">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Fichaje de Pasantes - Autos del Sur</title>
+<meta name="theme-color" content="#00123a">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@300;500;600&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#f6f5f2; --card:#ffffff; --ink:#1c1b19; --muted:#6b6862;
-  --accent:#c05a2e; --accent-ink:#ffffff; --line:#e5e2db; --ok:#3a7d5c; --bad:#b3402e;
-  box-sizing:border-box;
-  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  --noche:#00123a; --medianoche:#000a5d; --ford:#2457d6; --ford-deep:#173fa8;
+  --bg:#eceff6; --surface:#ffffff; --ink:#0c1226; --muted:#566079; --line:#d3d9e6;
+  --ok:#17855a; --warn:#e2a100; --bad:#c23b2e;
+  --tint-ok:rgba(23,133,90,.12); --tint-bad:rgba(194,59,46,.10); --tint-warn:rgba(226,161,0,.16);
+  --f-body:"Barlow","Segoe UI",system-ui,-apple-system,sans-serif;
+  --f-head:"Barlow Semi Condensed","Barlow","Arial Narrow",sans-serif;
+  --f-clock:"Barlow Condensed","Barlow Semi Condensed","Arial Narrow",sans-serif;
+  --textura:
+    repeating-linear-gradient(45deg, rgba(255,255,255,.035) 0 2px, transparent 2px 10px),
+    repeating-linear-gradient(-45deg, rgba(0,10,93,.55) 0 2px, transparent 2px 10px),
+    linear-gradient(160deg, #00196b 0%, #00123a 55%, #000b26 100%);
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#171512; --card:#211f1c; --ink:#f2efe9; --muted:#a39d92; --line:#37342e;
+    --bg:#090e1d; --surface:#111a31; --ink:#e9edf7; --muted:#9aa5bf; --line:#26304a; --ford:#5b8cf0;
   }
 }
-:root[data-theme="dark"]{
-  --bg:#171512; --card:#211f1c; --ink:#f2efe9; --muted:#a39d92; --line:#37342e;
-}
-html{scroll-padding-top:env(safe-area-inset-top,0px); height:100%; overscroll-behavior:none; -webkit-tap-highlight-color:transparent;}
-button,input,select{touch-action:manipulation;}
-input,select{font-size:16px !important;}
 *{box-sizing:border-box;}
-body{
-  margin:0; height:100%; background:var(--bg); color:var(--ink);
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-  display:flex; flex-direction:column;
+html,body{height:100%;}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--f-body); font-size:16px; line-height:1.45; display:flex; flex-direction:column;}
+[hidden]{display:none !important;}
+:focus-visible{outline:3px solid var(--ford); outline-offset:2px; border-radius:6px;}
+h1,h2,h3{font-family:var(--f-head); margin:0; font-weight:600; letter-spacing:.005em;}
+h2{font-size:23px; line-height:1.15;}
+p{margin:0;}
+
+/* ---------- Logo ---------- */
+.logo-box{position:relative; display:inline-flex; align-items:center; justify-content:center; flex:none;}
+.logo-box img{display:none;}
+.logo-box.has-img img{display:block; width:100%; height:100%; object-fit:cover;}
+.logo-box.has-img .logo-fallback{display:none;}
+.logo-fallback{width:100%; height:100%;}
+.logo-box{width:84px; height:46px;}
+.logo-box.has-img{overflow:hidden; border-radius:10px; width:44px; height:44px;}
+.splash-logo, .splash-logo.has-img{width:min(62vw,250px); height:min(62vw,250px); border-radius:28px; box-shadow:0 18px 60px rgba(0,0,0,.5);}
+.login-logo.has-img{width:132px; height:132px; border-radius:24px; box-shadow:0 12px 40px rgba(0,0,0,.45);}
+
+/* ---------- Splash ---------- */
+#splash{position:fixed; inset:0; z-index:50; background:var(--textura); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:34px; transition:opacity .55s ease, visibility .55s ease;}
+#splash.out{opacity:0; visibility:hidden;}
+#splash .splash-logo{animation:entra .9s cubic-bezier(.2,.8,.2,1) both;}
+.linea{width:min(62vw,250px); height:2px; background:rgba(255,255,255,.18); overflow:hidden; border-radius:2px;}
+.linea i{display:block; height:100%; width:100%; background:#fff; transform-origin:left; animation:carga 2s .2s cubic-bezier(.5,0,.2,1) both;}
+@keyframes entra{from{opacity:0; transform:scale(.92);}to{opacity:1; transform:none;}}
+@keyframes carga{from{transform:scaleX(0);}to{transform:scaleX(1);}}
+
+/* ---------- Botones y campos ---------- */
+.btn{font:600 17px/1 var(--f-body); border:0; border-radius:10px; min-height:52px; padding:0 20px; cursor:pointer; color:#fff; transition:transform .08s ease, filter .15s ease;}
+.btn:active:not(:disabled){transform:translateY(1px);}
+.btn:disabled{opacity:.42; cursor:not-allowed;}
+.btn-ok{background:var(--ok);} .btn-bad{background:var(--bad);} .btn-main{background:var(--ford-deep);}
+.btn-ghost{background:transparent; color:var(--ink); box-shadow:inset 0 0 0 1.5px var(--line);}
+.btn-sm{min-height:40px; font-size:15px; padding:0 16px;}
+.btn-link{background:none; border:0; color:inherit; font:500 14px var(--f-body); text-decoration:underline; text-underline-offset:3px; cursor:pointer; padding:6px 2px; opacity:.85;}
+.btn-mini{font:500 13px var(--f-body); border:1px solid var(--line); background:transparent; color:var(--ink); border-radius:7px; padding:5px 10px; cursor:pointer;}
+.btn-mini.danger{color:var(--bad); border-color:var(--bad);}
+label{display:block; font-size:14px; font-weight:600; margin-bottom:6px;}
+textarea{width:100%; padding:11px 13px; border-radius:9px; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); font:400 16px/1.4 var(--f-body); margin-bottom:14px; resize:vertical;}
+textarea:focus{outline:none; border-color:var(--ford); box-shadow:0 0 0 3px rgba(36,87,214,.25);}
+.imp-res{list-style:none; margin:14px 0 0; padding:0; font-size:15px;}
+.imp-res li{padding:6px 0; border-top:1px solid var(--line);}
+.imp-res .ok{color:var(--ok);} .imp-res .mal{color:var(--bad);} .imp-res .aprox{color:#8a6200;}
+input,select{width:100%; min-height:48px; padding:0 13px; border-radius:9px; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); font:400 16px var(--f-body); margin-bottom:16px;}
+input:focus,select:focus{outline:none; border-color:var(--ford); box-shadow:0 0 0 3px rgba(36,87,214,.25);}
+input[type=checkbox]{width:20px; min-height:20px; margin:0 8px 0 0; accent-color:var(--ford-deep);}
+.hint{font-size:14px; color:var(--muted); min-height:20px;}
+.row{display:flex; gap:12px; flex-wrap:wrap; align-items:center;}
+.row-between{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:0 16px;}
+@media (max-width:600px){.grid2{grid-template-columns:1fr;}}
+
+/* ---------- Login ---------- */
+#viewLogin{flex:1; display:flex; flex-direction:column; min-height:100%;}
+.login-brand{background:var(--textura); color:#fff; padding:calc(40px + env(safe-area-inset-top,0px)) 24px 64px; display:flex; flex-direction:column; align-items:center; gap:18px; text-align:center;}
+.login-brand p{font-family:var(--f-head); font-size:19px; font-weight:500; max-width:20ch; line-height:1.25; opacity:.92;}
+.login-form{flex:1; background:var(--surface); margin-top:-28px; border-radius:26px 26px 0 0; padding:30px 24px 32px; width:100%; max-width:480px; align-self:center;}
+.login-form h1{font-size:30px; margin-bottom:6px;}
+.login-form .lede{color:var(--muted); margin-bottom:24px; max-width:42ch;}
+@media (min-width:860px){
+  #viewLogin{flex-direction:row;}
+  .login-brand{flex:0 0 46%; justify-content:center; padding:48px; gap:26px;}
+  .login-brand p{font-size:26px;}
+  .login-logo.has-img{width:200px; height:200px; border-radius:32px;}
+  .login-form{margin:0; border-radius:0; max-width:none; align-self:stretch; display:flex; flex-direction:column; justify-content:center; padding:48px max(48px,calc((54vw - 400px)/2));}
 }
-header{
-  padding:16px 18px calc(12px); border-bottom:1px solid var(--line);
-  display:flex; align-items:center; justify-content:space-between; gap:8px;
-}
-h1{font-size:17px; margin:0; font-weight:600;}
-.tabbar{display:flex; border-top:1px solid var(--line); background:var(--card);}
-.tabbar button{
-  flex:1; border:none; background:transparent; color:var(--muted); font-size:12px; font-weight:600;
-  padding:10px 0 12px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:2px;
-}
-.tabbar button .ico{font-size:22px; line-height:1;}
-.tabbar button.active{color:var(--accent);}
-#btnInstalar{border:1px solid var(--accent); background:transparent; color:var(--accent); font-size:12px; font-weight:700; padding:7px 12px; border-radius:20px; cursor:pointer;}
-.reloj{text-align:center; padding:8px 0 20px;}
-.reloj .hora{font-size:48px; font-weight:700; letter-spacing:-.02em; font-variant-numeric:tabular-nums;}
-.reloj .fecha{font-size:14px; color:var(--muted); margin-top:2px; text-transform:capitalize;}
-.ios-hint{font-size:12px; color:var(--muted); text-align:center; margin-top:10px; display:none;}
-main{flex:1; overflow-y:auto; padding:18px; max-width:520px; width:100%; margin:0 auto;}
-.card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px; margin-bottom:14px;}
-label{display:block; font-size:12px; color:var(--muted); margin-bottom:6px; font-weight:600; text-transform:uppercase; letter-spacing:.03em;}
-select,input{
-  width:100%; padding:11px 12px; border-radius:9px; border:1px solid var(--line);
-  background:var(--bg); color:var(--ink); font-size:15px; margin-bottom:14px;
-}
-.btnrow{display:flex; gap:10px;}
-button.action{
-  flex:1; padding:14px; border-radius:10px; border:none; font-size:15px; font-weight:700; cursor:pointer;
-}
-.btn-in{background:var(--ok); color:#fff;}
-.btn-out{background:var(--bad); color:#fff;}
-button.action:disabled{opacity:.5;}
-button.link{background:none; border:none; color:var(--muted); font-size:12px; text-decoration:underline; cursor:pointer; padding:4px 0;}
-#status{margin-top:12px; font-size:13px; color:var(--muted); min-height:18px;}
-table{width:100%; border-collapse:collapse; font-size:13px;}
-th,td{text-align:left; padding:8px 6px; border-bottom:1px solid var(--line);}
-th{color:var(--muted); font-weight:600; font-size:11px; text-transform:uppercase;}
-.tag{display:inline-block; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:700;}
-.tag-in{background:rgba(58,125,92,.15); color:var(--ok);}
-.tag-out{background:rgba(179,64,46,.15); color:var(--bad);}
-.empty{color:var(--muted); font-size:13px; text-align:center; padding:20px 0;}
+
+/* ---------- App: barra superior ---------- */
+header.top{background:var(--textura); color:#fff; display:flex; align-items:center; gap:14px; padding:10px 18px; padding-top:calc(10px + env(safe-area-inset-top,0px));}
+header.top .titulo{flex:1; min-width:0;}
+header.top h1{font-size:19px; line-height:1.1;}
+header.top .quien{font-size:14px; opacity:.8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+nav.tabs{background:var(--surface); border-bottom:1px solid var(--line); display:flex; gap:4px; padding:0 14px; overflow-x:auto;}
+nav.tabs button{background:none; border:0; border-bottom:3px solid transparent; color:var(--muted); font:600 16px var(--f-head); padding:14px 14px 11px; cursor:pointer; white-space:nowrap;}
+nav.tabs button.active{color:var(--ink); border-bottom-color:var(--ford);}
+main{flex:1; overflow-y:auto; width:100%;}
+.contenedor{width:100%; max-width:560px; margin:0 auto; padding:0 18px 40px;}
+main.wide .contenedor{max-width:1040px; padding-top:26px;}
+
+.bloque{padding:24px 0; border-top:1px solid var(--line);}
+.bloque:first-child{border-top:0;}
+.bloque > h2{margin-bottom:16px;}
+.panel{background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:20px; margin-bottom:18px;}
+
+/* ---------- Pasante: reloj en óvalo ---------- */
+.hero{background:var(--textura); color:#fff; text-align:center; padding:26px 18px 58px;}
+.oval{width:min(86vw,360px); aspect-ratio:1.72/1; margin:0 auto; border-radius:50%; border:2.5px solid rgba(255,255,255,.9); box-shadow:0 0 0 7px rgba(255,255,255,.07), inset 0 0 0 1px rgba(255,255,255,.2); display:flex; flex-direction:column; align-items:center; justify-content:center;}
+.reloj{font-family:var(--f-clock); font-weight:300; font-size:clamp(68px,22vw,98px); line-height:.9; font-variant-numeric:tabular-nums; letter-spacing:.01em;}
+.reloj small{font-size:.38em; font-weight:500; opacity:.7; margin-left:3px; vertical-align:baseline;}
+.fecha{font:500 16px var(--f-head); opacity:.85; margin-top:8px;}
+.estado{font:500 18px/1.3 var(--f-head); margin:20px auto 0; max-width:30ch;}
+.acciones{background:var(--bg); margin-top:-30px; border-radius:26px 26px 0 0; padding:24px 0 6px;}
+.acciones .row{flex-wrap:nowrap;}
+.acciones .btn{flex:1; min-height:64px; font-size:clamp(16px,4.7vw,19px); padding:0 10px;}
+#status{margin-top:14px; font-size:15px; min-height:22px; font-weight:500;}
+
+/* ---------- Calendario (fichas) ---------- */
+.cal-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;}
+.cal-head b{font:600 19px var(--f-head);}
+.cal-head button{border:1.5px solid var(--line); background:var(--surface); color:var(--ink); width:42px; height:42px; border-radius:50%; font-size:20px; cursor:pointer;}
+.cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px;}
+.cal-dow{font-size:13px; color:var(--muted); text-align:center; font-weight:600; padding-bottom:4px;}
+.cal-day{aspect-ratio:1; display:flex; align-items:center; justify-content:center; border-radius:50%; font:500 15px var(--f-clock); font-size:17px; color:var(--ink); max-height:52px; justify-self:center; width:100%;}
+.cal-day.blank{visibility:hidden;}
+.cal-day.we{color:var(--muted);}
+.cal-day.today{box-shadow:inset 0 0 0 2px var(--ink);}
+.cal-day.full{background:var(--ok); color:#fff; font-weight:600;}
+.cal-day.part{background:var(--warn); color:#1c1400; font-weight:600;}
+.legend{display:flex; gap:8px 18px; flex-wrap:wrap; margin-top:14px; font-size:14px; color:var(--muted);}
+.legend i{display:inline-block; width:12px; height:12px; border-radius:50%; margin-right:6px; vertical-align:-1px;}
+
+/* ---------- Tablas ---------- */
 .wrap{overflow-x:auto;}
-.hint{font-size:12px; color:var(--muted); margin-top:4px;}
+table{width:100%; border-collapse:collapse; font-size:15px;}
+th,td{text-align:left; padding:11px 8px 11px 0; border-bottom:1px solid var(--line); vertical-align:middle;}
+th{color:var(--muted); font-weight:600; font-size:13px;}
+td.num, .num{font-variant-numeric:tabular-nums;}
+.tag{display:inline-block; padding:2px 9px; border-radius:20px; font-size:13px; font-weight:600; font-variant-numeric:tabular-nums;}
+.tag-in{background:var(--tint-ok); color:var(--ok);}
+.tag-out{background:var(--tint-bad); color:var(--bad);}
+.badge{font-size:13px; font-weight:600; padding:2px 10px; border-radius:20px; background:var(--tint-warn); color:#8a6200;}
+.badge.ok{background:var(--tint-ok); color:var(--ok);}
+.empty{color:var(--muted); text-align:center; padding:26px 0;}
+.alerta{border-left:5px solid var(--bad); background:var(--tint-bad); border-radius:0 10px 10px 0; padding:14px 16px; margin-bottom:24px;}
+.alerta b{display:block; margin-bottom:2px;}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .badge{color:#f0c14d;} }
+
+.hist-grid{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.1fr); gap:32px; align-items:start;}
+@media (max-width:820px){.hist-grid{grid-template-columns:1fr; gap:0;}}
+
+/* ---------- Sedes ---------- */
+.sede{border:1px solid var(--line); border-left:5px solid var(--ok); border-radius:10px; padding:18px; margin-bottom:14px; background:var(--surface);}
+.sede.pendiente{border-left-color:var(--warn);}
+.sede h3{font-size:19px;}
+
+/* sedes por pasante / diálogo / ajustes */
+.checks{display:flex; flex-wrap:wrap; gap:10px 22px; margin-bottom:6px;}
+label.chk{display:flex; align-items:center; font-weight:500; margin:0; cursor:pointer;}
+dialog{border:0; border-radius:14px; padding:24px; width:min(92vw,440px); background:var(--surface); color:var(--ink); box-shadow:0 20px 60px rgba(0,10,40,.45);}
+dialog::backdrop{background:rgba(0,10,40,.55);}
+dialog h2{margin-bottom:14px;}
+dialog .checks{flex-direction:column; margin-bottom:14px;}
+.switch{display:flex; align-items:center; font-weight:600; margin:0; cursor:pointer;}
+.switch input{width:46px; height:26px; min-height:26px; margin:0 8px 0 0; appearance:none; border-radius:13px; background:var(--line); position:relative; cursor:pointer; transition:background .15s; border:0;}
+.switch input::after{content:""; position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%; background:#fff; transition:transform .15s;}
+.switch input:checked{background:var(--ok);}
+.switch input:checked::after{transform:translateX(20px);}
+.s-estado{font-size:14px; margin:0 0 12px;}
+.s-estado a{color:var(--ford);}
+details.avanzado{margin-top:6px;} details.avanzado summary{cursor:pointer; font-weight:600; font-size:14px; color:var(--muted); padding:6px 0 12px;}
+@media (prefers-reduced-motion: reduce){ #splash *{animation:none !important;} .btn{transition:none;} }
 </style>
 </head>
 <body>
-<header>
-  <h1>🕐 Fichaje Pasantes</h1>
-  <button id="btnInstalar" style="display:none;">📲 Instalar app</button>
+
+<!-- ===================== SPLASH ===================== -->
+<div id="splash" aria-hidden="true">
+  <div class="logo-box splash-logo" data-logo></div>
+  <div class="linea"><i></i></div>
+</div>
+
+<!-- ===================== LOGIN ===================== -->
+<section id="viewLogin" hidden>
+  <div class="login-brand">
+    <div class="logo-box login-logo" data-logo></div>
+    <p>Registro de entrada y salida de pasantes</p>
+  </div>
+  <form class="login-form" id="formLogin" autocomplete="on">
+    <h1>Iniciar sesión</h1>
+    <p class="lede">Pasantes: ingresá con tu nombre y tu PIN. Recursos Humanos: con tu email y contraseña.</p>
+    <label for="loginUser">Usuario</label>
+    <input id="loginUser" autocomplete="username" autocapitalize="none" placeholder="Nombre y apellido, o email">
+    <label for="loginPass">Clave</label>
+    <input id="loginPass" type="password" autocomplete="current-password" placeholder="PIN o contraseña">
+    <button class="btn btn-main" id="btnLogin" type="submit" style="width:100%;">Iniciar sesión</button>
+    <div id="statusLogin" class="hint" style="margin-top:12px;" role="status"></div>
+    <div id="modoLocal" class="hint" hidden>Modo de prueba local: los datos se guardan en tu computadora.</div>
+  </form>
+</section>
+
+<!-- ===================== APP ===================== -->
+<div id="app" hidden style="display:flex; flex-direction:column; flex:1; min-height:0;">
+<header class="top">
+  <div class="logo-box" data-logo></div>
+  <div class="titulo">
+    <h1>Fichaje de pasantes</h1>
+    <div class="quien" id="whoami"></div>
+  </div>
+  <button class="btn-link" id="btnSalir" style="color:#fff;">Cerrar sesión</button>
 </header>
-<main>
-  <section id="viewFichar">
-    <div class="reloj"><div class="hora" id="relojHora">--:--</div><div class="fecha" id="relojFecha"></div></div>
-    <div class="card">
-      <label for="nombre">Pasante</label>
-      <input id="nombre" list="listaNombres" placeholder="Tu nombre">
-      <datalist id="listaNombres"></datalist>
-      <label for="pin">Clave</label>
-      <input id="pin" type="password" inputmode="numeric" maxlength="6" placeholder="PIN de 4 a 6 dígitos">
-      <div class="btnrow">
-        <button class="action btn-in" id="btnEntrada">Marcar Entrada</button>
-        <button class="action btn-out" id="btnSalida">Marcar Salida</button>
-      </div>
-      <div id="status"></div>
-    </div>
-    <div class="ios-hint" id="iosHint">En iPhone: tocá Compartir y luego "Agregar a inicio" para instalar la app.</div>
-  </section>
-  <section id="viewPanel" style="display:none;">
-    <div class="card" id="panelLogin">
-      <label for="emailRRHH">Email de RRHH</label>
-      <input id="emailRRHH" type="email" placeholder="tu-email@empresa.com">
-      <label for="claveRRHH">Contraseña</label>
-      <input id="claveRRHH" type="password" placeholder="Contraseña">
-      <div class="btnrow">
-        <button class="action btn-in" id="btnEntrarRRHH" style="flex:none;">Entrar</button>
-      </div>
-      <div id="statusRRHH" class="hint"></div>
-    </div>
-    <div id="panelContent" style="display:none;">
-    <div class="card" id="alertaCard" style="display:none; border-color:var(--bad);">
-      <label style="color:var(--bad);">⚠️ Sin marcar salida</label>
-      <div id="listaAlertas" style="font-size:13px;"></div>
-    </div>
-    <div class="card">
-      <div class="btnrow" style="margin-bottom:14px;">
-        <label style="margin:0; flex:1;">Registros de hoy</label>
-        <button class="action btn-in" id="btnExportar" style="flex:none; padding:8px 14px; font-size:13px;">⬇️ Exportar CSV</button>
-      </div>
-      <div class="wrap">
-        <table id="tablaHoy"><thead><tr><th>Pasante</th><th>Área</th><th>Entrada</th><th>Salida</th><th>Horas</th><th>Ubicación</th></tr></thead><tbody></tbody></table>
-      </div>
-      <div class="empty" id="emptyHoy" style="display:none;">Todavía no hay fichajes hoy.</div>
-    </div>
-    <div class="card">
-      <label>Pasantes autorizados</label>
-      <input id="nuevoNombre" placeholder="Nombre del pasante">
-      <input id="nuevoPin" type="password" inputmode="numeric" maxlength="6" placeholder="Asignar PIN">
-      <input id="nuevoArea" placeholder="Área o sector">
-      <input id="nuevoHorario" placeholder="Horario asignado (ej. Lun a Vie 9 a 18)">
-      <label for="nuevoInicio" style="margin-bottom:4px;">Inicio de la pasantía</label>
-      <input id="nuevoInicio" type="date">
-      <label for="nuevoFin" style="margin-bottom:4px;">Fin de la pasantía</label>
-      <input id="nuevoFin" type="date">
-      <div class="btnrow">
-        <button class="action btn-in" id="btnAgregar" style="flex:none;">Agregar pasante</button>
-      </div>
-      <div class="hint" id="statusPasante"></div>
-      <div class="wrap" style="margin-top:12px;">
-        <table id="tablaPasantes"><thead><tr><th>Nombre</th><th>Área</th><th>Horario</th><th>Inicio</th><th>Fin</th></tr></thead><tbody></tbody></table>
-      </div>
-      <button class="link" id="btnSalirRRHH">Cerrar sesión de RRHH</button>
-    </div>
-    </div>
-  </section>
-</main>
-<nav class="tabbar">
-  <button id="tabFichar" class="active"><span class="ico">🕐</span>Fichar</button>
-  <button id="tabPanel"><span class="ico">📋</span>Panel RRHH</button>
+<nav class="tabs" id="navRRHH" hidden aria-label="Secciones">
+  <button data-sec="hoy" class="active">Hoy</button>
+  <button data-sec="pasantes">Pasantes</button>
+  <button data-sec="historial">Historial</button>
+  <button data-sec="sedes">Sedes</button>
 </nav>
 
+<main id="main">
+
+  <!-- ===== Vista PASANTE ===== -->
+  <section id="secPasante" hidden>
+    <div class="hero">
+      <div class="oval" role="timer" aria-label="Hora actual">
+        <div class="reloj"><span id="relojHM">--:--</span><small id="relojS">--</small></div>
+      </div>
+      <p class="fecha" id="relojFecha"></p>
+      <p class="estado" id="estadoHoy" aria-live="polite"></p>
+    </div>
+    <div class="acciones">
+      <div class="contenedor" style="padding-bottom:0;">
+        <div class="row">
+          <button class="btn btn-ok" id="btnEntrada">Marcar entrada</button>
+          <button class="btn btn-bad" id="btnSalida">Marcar salida</button>
+        </div>
+        <div id="status" role="status"></div>
+        <p class="hint" id="hintSedes">Activá la ubicación del teléfono para fichar.</p>
+      </div>
+    </div>
+    <div class="contenedor">
+      <div class="bloque">
+        <h2>Mi calendario</h2>
+        <div id="calPasante"></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="contenedor" id="contRRHH" hidden>
+
+  <!-- ===== RRHH: Hoy ===== -->
+  <section id="secHoy" hidden>
+    <div class="alerta" id="alertaSedes" style="display:none; border-left-color:var(--warn); background:var(--tint-warn);">
+      <b>Revisá la ubicación de las sedes</b>
+      <div id="listaAlertaSedes"></div>
+    </div>
+    <div class="alerta" id="alertaCard" style="display:none;">
+      <b>Falta la salida</b>
+      <div id="listaAlertas"></div>
+    </div>
+    <h2 style="margin-bottom:6px;">Fichadas de hoy</h2>
+    <div class="wrap">
+      <table id="tablaHoy"><thead><tr><th>Pasante</th><th>Área</th><th>Entrada</th><th>Salida</th><th>Horas</th><th>Sede</th></tr></thead><tbody></tbody></table>
+    </div>
+    <div class="empty" id="emptyHoy" style="display:none;">Todavía no hay fichadas hoy.</div>
+  </section>
+
+  <!-- ===== RRHH: Pasantes ===== -->
+  <section id="secPasantes" hidden>
+    <div class="panel">
+      <h2 style="margin-bottom:16px;">Agregar pasante</h2>
+      <div class="grid2">
+        <div><label for="nuevoNombre">Nombre completo</label><input id="nuevoNombre" placeholder="Nombre y apellido"></div>
+        <div><label for="nuevoPin">PIN</label><input id="nuevoPin" type="password" inputmode="numeric" maxlength="6" placeholder="4 a 6 dígitos"></div>
+        <div><label for="nuevoArea">Área</label><input id="nuevoArea" placeholder="Ventas, taller, administración"></div>
+        <div><label for="nuevoHorario">Horario</label><input id="nuevoHorario" placeholder="Lun a Vie de 9 a 18"></div>
+        <div><label for="nuevoInicio">Inicio de la pasantía</label><input id="nuevoInicio" type="date"></div>
+        <div><label for="nuevoFin">Fin de la pasantía</label><input id="nuevoFin" type="date"></div>
+      </div>
+      <label>Sedes donde puede fichar</label>
+      <div class="checks" id="nuevoSedes"></div>
+      <div class="hint" id="nuevoSedesHint" style="margin-bottom:16px;"></div>
+      <div class="row"><button class="btn btn-ok btn-sm" id="btnAgregar">Agregar pasante</button><span class="hint" id="statusPasante" role="status"></span></div>
+    </div>
+    <h2 style="margin-bottom:6px;">Pasantes autorizados</h2>
+    <div class="wrap">
+      <table id="tablaPasantes"><thead><tr><th>Nombre</th><th>Área</th><th>Sedes</th><th>Horario</th><th>Inicio</th><th>Fin</th><th></th></tr></thead><tbody></tbody></table>
+    </div>
+    <div class="empty" id="emptyPasantes" style="display:none;">Todavía no cargaste pasantes. Agregá el primero con el formulario de arriba.</div>
+  </section>
+
+  <!-- ===== RRHH: Historial ===== -->
+  <section id="secHistorial" hidden>
+    <div class="panel">
+      <h2 style="margin-bottom:16px;">Historial de fichadas</h2>
+      <label for="histPasante">Pasante</label>
+      <select id="histPasante"></select>
+      <div class="grid2">
+        <div><label for="histDesde">Desde</label><input id="histDesde" type="date"></div>
+        <div><label for="histHasta">Hasta</label><input id="histHasta" type="date"></div>
+      </div>
+      <div class="row-between">
+        <div class="hint" id="histResumen" style="margin:0;"></div>
+        <button class="btn btn-main btn-sm" id="btnExportar">Exportar historial (CSV)</button>
+      </div>
+    </div>
+    <div class="hist-grid">
+      <div class="bloque" style="border-top:0; padding-top:6px;"><h2>Calendario</h2><div id="calRRHH"></div></div>
+      <div class="bloque" style="border-top:0; padding-top:6px;">
+        <h2 style="margin-bottom:6px;">Detalle por día</h2>
+        <div class="wrap">
+          <table id="tablaHist"><thead><tr><th>Fecha</th><th>Entrada</th><th>Salida</th><th>Horas</th><th>Sede</th></tr></thead><tbody></tbody></table>
+        </div>
+        <div class="empty" id="emptyHist" style="display:none;">No hay fichadas en estas fechas.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== RRHH: Sedes ===== -->
+  <section id="secSedes" hidden>
+    <h2 style="margin-bottom:6px;">Sedes habilitadas para fichar</h2>
+    <p class="hint" style="margin-bottom:20px; max-width:62ch;">La ubicación de cada sede se busca sola a partir de su dirección. Cada pasante solo puede fichar en las sedes que le asignes en la sección Pasantes. La ubicación del teléfono se usa únicamente cuando un pasante ficha.</p>
+    <div class="panel">
+      <h3 style="font-size:19px; margin-bottom:6px;">Importar sedes</h3>
+      <p class="hint" style="margin-bottom:12px; max-width:70ch;">Pegá la dirección tal cual aparece en Google, una por línea. El nombre se arma solo con la empresa y la localidad (por ejemplo, “Autos del Sur Sarandí”). Si querés otro nombre, escribilo antes con dos puntos: <b>Nombre: dirección</b>.</p>
+      <textarea id="impTexto" rows="3" spellcheck="false" placeholder="Av. Bartolomé Mitre 2900, B1872 Sarandí, Provincia de Buenos Aires"></textarea>
+      <div class="row"><button class="btn btn-main btn-sm" id="btnImportar">Importar y activar</button></div>
+      <p class="hint" style="margin-top:10px; max-width:70ch;">Si una dirección no se encuentra bien, pegá en su lugar las coordenadas (clic derecho sobre el lugar en Google Maps) o un enlace largo de Google Maps.</p>
+      <ul id="impResultado" class="imp-res" role="status"></ul>
+    </div>
+    <div id="listaSedes"></div>
+  </section>
+
+  </div>
+</main>
+</div>
+
+<dialog id="dlgSedes">
+  <form method="dialog">
+    <h2 id="dlgTitulo">Sedes</h2>
+    <div class="checks" id="dlgLista"></div>
+    <div class="hint" id="dlgStatus" role="status"></div>
+    <div class="row" style="margin-top:8px;"><button class="btn btn-ghost btn-sm" value="cancel">Cancelar</button><button class="btn btn-main btn-sm" id="dlgGuardar" value="ok">Guardar sedes</button></div>
+  </form>
+</dialog>
+
+<!-- Modo prueba local (lo define server.js; en GitHub Pages no existe y se ignora) -->
+<script src="config.js" onerror="void 0"></script>
+<script src="local-client.js"></script>
 <!-- Cliente de Supabase (UMD, sirve para HTML plano sin build step) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
@@ -165,109 +369,267 @@ th{color:var(--muted); font-weight:600; font-size:11px; text-transform:uppercase
    la seguridad real la dan las políticas RLS del archivo
    supabase-schema.sql, no el hecho de ocultar esta key.
    ============================================================ */
-const SUPABASE_URL = "https://mxwyiiltvmcxayjwrqof.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_lHXjfWCanYeJqCuPSucX7A__3I2Rp0Y";
+const SUPABASE_URL = "https://TU-PROYECTO.supabase.co";
+const SUPABASE_ANON_KEY = "TU-ANON-KEY-PUBLICA";
+
+/* Archivo del logo: copiá el logo oficial de la empresa en esta carpeta
+   con este nombre (PNG o SVG renombrado a .png no sirve: usá la extensión real). */
+const LOGO_SRC = "logo.png";
+
+/* Nombre de la empresa: se usa para nombrar solas las sedes al importarlas
+   (ej. "Autos del Sur" + "Sarandí" = "Autos del Sur Sarandí"). */
+const NOMBRE_EMPRESA = "Autos del Sur";
 
 const $=id=>document.getElementById(id);
+const TZ='America/Argentina/Buenos_Aires';
 let sb=null;
 try{
-  if(SUPABASE_URL.includes('TU-PROYECTO') || SUPABASE_ANON_KEY.includes('TU-ANON-KEY')){
+  if(window.FICHAJE_LOCAL){
+    sb = window.createLocalClient();          // servidor Node de prueba (server.js)
+  }else if(SUPABASE_URL.includes('TU-PROYECTO') || SUPABASE_ANON_KEY.includes('TU-ANON-KEY')){
     console.warn('Falta configurar SUPABASE_URL y SUPABASE_ANON_KEY en index.html');
   }else{
     sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   }
 }catch(e){console.error(e);}
 
-$('tabFichar').onclick=()=>{$('viewFichar').style.display='block';$('viewPanel').style.display='none';$('tabFichar').classList.add('active');$('tabPanel').classList.remove('active');};
-$('tabPanel').onclick=()=>{$('viewFichar').style.display='none';$('viewPanel').style.display='block';$('tabPanel').classList.add('active');$('tabFichar').classList.remove('active');};
+/* ---------- Utilidades ---------- */
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const hoyKey=()=>new Date().toLocaleDateString('en-CA',{timeZone:TZ});          // AAAA-MM-DD en hora argentina
+const hora=iso=>new Date(iso).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',hourCycle:'h23',timeZone:TZ});
+const fechaCorta=k=>{const [y,m,d]=k.split('-');return d+'/'+m+'/'+y;};
+function msg(el,texto,tipo){el.textContent=texto;el.style.color=tipo==='ok'?'var(--ok)':tipo==='bad'?'var(--bad)':'var(--muted)';}
+function horasNum(a,b){const ms=new Date(b)-new Date(a);return ms>0?ms/3600000:0;}
+function horasTxt(a,b){const h=horasNum(a,b);return h>0?h.toFixed(1)+' hs':'—';}
 
-function todayKey(d=new Date()){return d.toISOString().slice(0,10);}
-function timeStr(iso){return new Date(iso).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});}
+/* ---------- Logo (usa logo.png si existe; si no, un emblema genérico) ---------- */
+const FALLBACK_LOGO='<svg class="logo-fallback" viewBox="0 0 200 110" role="img" aria-label="Logo"><ellipse cx="100" cy="55" rx="94" ry="50" fill="#12348a"/><ellipse cx="100" cy="55" rx="86" ry="43" fill="none" stroke="#fff" stroke-opacity=".85" stroke-width="3"/><circle cx="100" cy="55" r="25" fill="none" stroke="#fff" stroke-width="5"/><path d="M100 40v16l11 7" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+document.querySelectorAll('[data-logo]').forEach(box=>{
+  box.innerHTML=FALLBACK_LOGO;
+  const img=new Image();
+  img.alt='Logo';
+  img.onload=()=>{box.classList.add('has-img');};
+  img.src=LOGO_SRC;
+  box.appendChild(img);
+});
 
-/* ---------- Fichar (pasantes) ---------- */
+/* ---------- Estado de sesión ---------- */
+let rol=null;                // 'rrhh' | 'pasante' | null
+let pasanteSes=null;         // {nombre, pin, area, ...}  (solo en memoria)
+let pasantesLista=[];
+let realtimeOn=false;
 
-async function cargarDatalist(){
-  if(!sb)return;
-  const {data,error}=await sb.from('pasantes_publico').select('nombre');
-  if(error)return;
-  const lista=$('listaNombres');
-  lista.innerHTML='';
-  (data||[]).forEach(v=>{
-    const opt=document.createElement('option');
-    opt.value=v.nombre;
-    lista.appendChild(opt);
+/* ---------- Pantallas ---------- */
+function mostrarLogin(){
+  $('app').hidden=true; $('viewLogin').hidden=false;
+  $('loginPass').value='';
+}
+function entrarApp(){
+  $('viewLogin').hidden=true; $('app').hidden=false;
+  const esRRHH=rol==='rrhh';
+  $('navRRHH').hidden=!esRRHH;
+  $('main').classList.toggle('wide',esRRHH);
+  $('contRRHH').hidden=!esRRHH;
+  ['secPasante','secHoy','secPasantes','secHistorial','secSedes'].forEach(id=>$(id).hidden=true);
+  if(esRRHH){
+    $('whoami').textContent='Recursos Humanos';
+    irSeccion('hoy');
+    autoGeocodificarSedes();
+  }else{
+    $('whoami').textContent=pasanteSes.nombre+(pasanteSes.area?', '+pasanteSes.area:'');
+    tickReloj();
+    $('hintSedes').textContent=pasanteSes.sedes.length?'Podés fichar en: '+pasanteSes.sedes.join(', ')+'. Activá la ubicación del teléfono.':'Todavía no tenés una sede asignada. Avisale a Recursos Humanos.';
+    $('secPasante').hidden=false;
+    msg($('status'),'');
+    cargarMiCalendario();
+  }
+}
+
+/* ---------- Login único: el rol lo define la cuenta ---------- */
+$('formLogin').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const st=$('statusLogin');
+  const user=$('loginUser').value.trim();
+  const pass=$('loginPass').value;
+  if(!user||!pass){msg(st,'Completá usuario y clave.','bad');return;}
+  if(!sb){msg(st,'Falta configurar Supabase (SUPABASE_URL / ANON_KEY en el código).','bad');return;}
+  $('btnLogin').disabled=true; msg(st,'Ingresando…');
+  try{
+    if(user.includes('@')){
+      // Email => cuenta de Supabase Auth. Solo entra si además figura como RRHH.
+      const {error}=await sb.auth.signInWithPassword({email:user,password:pass});
+      if(error){msg(st,'Email o contraseña incorrectos.','bad');return;}
+      const {data:esRRHH}=await sb.rpc('soy_rrhh');
+      if(!esRRHH){await sb.auth.signOut();msg(st,'Esa cuenta no tiene permisos de Recursos Humanos.','bad');return;}
+      rol='rrhh';
+    }else{
+      const {data,error}=await sb.rpc('login_pasante',{p_nombre:user,p_pin:pass});
+      if(error){msg(st,'No se pudo conectar. Probá de nuevo.','bad');return;}
+      if(!data||!data.ok){
+        msg(st,data&&data.error==='pasante_no_encontrado'?'No encontramos ese nombre en la lista de pasantes autorizados.':'Nombre o clave incorrectos.','bad');return;
+      }
+      pasanteSes={nombre:data.nombre,pin:pass,area:data.area,horario:data.horario,sedes:data.sedes||[]};
+      rol='pasante';
+    }
+    msg(st,'');
+    $('loginUser').value='';
+    entrarApp();
+  }finally{
+    $('btnLogin').disabled=false; $('loginPass').value='';
+  }
+});
+
+$('btnSalir').onclick=async()=>{
+  if(rol==='rrhh'&&sb)await sb.auth.signOut();
+  rol=null;pasanteSes=null;
+  if(sb&&realtimeOn){sb.removeAllChannels();realtimeOn=false;}
+  mostrarLogin();
+};
+
+/* ---------- Navegación RRHH ---------- */
+function irSeccion(sec){
+  const map={hoy:'secHoy',pasantes:'secPasantes',historial:'secHistorial',sedes:'secSedes'};
+  Object.entries(map).forEach(([k,id])=>$(id).hidden=(k!==sec));
+  document.querySelectorAll('#navRRHH button').forEach(b=>b.classList.toggle('active',b.dataset.sec===sec));
+  if(sec==='hoy')cargarHoy();
+  if(sec==='pasantes')cargarSedesLista().then(()=>{renderChecksSedes();cargarPasantesAdmin();});
+  if(sec==='historial')iniciarHistorial();
+  if(sec==='sedes')cargarSedes();
+  if(!realtimeOn)suscribirRealtime();
+}
+document.querySelectorAll('#navRRHH button').forEach(b=>b.onclick=()=>irSeccion(b.dataset.sec));
+
+/* ---------- Calendario (compartido: pasante y RRHH) ---------- */
+function agruparDias(rows){
+  const m={};
+  rows.forEach(r=>{
+    const d=m[r.dia]||(m[r.dia]={dia:r.dia});
+    if(r.tipo==='entrada'){
+      if(!d.entrada||new Date(r.ts)<new Date(d.entrada)){d.entrada=r.ts;d.lat=r.ubicacion_lat;d.lng=r.ubicacion_lng;d.sede=r.sede;}
+    }else if(!d.salida||new Date(r.ts)>new Date(d.salida)){d.salida=r.ts;}
+  });
+  return m;
+}
+
+function renderCalendario(el,dias,cal){
+  const {y,m}=cal;
+  let titulo=new Date(y,m,1).toLocaleDateString('es-AR',{month:'long',year:'numeric'}).replace(' de ',' ');
+  titulo=titulo.charAt(0).toUpperCase()+titulo.slice(1);
+  const offset=(new Date(y,m,1).getDay()+6)%7;           // semana arranca en lunes
+  const total=new Date(y,m+1,0).getDate();
+  const hoy=hoyKey();
+  let html='<div class="cal-head"><button type="button" data-nav="-1" aria-label="Mes anterior">‹</button><b>'+esc(titulo)+'</b><button type="button" data-nav="1" aria-label="Mes siguiente">›</button></div><div class="cal-grid">';
+  ['L','M','M','J','V','S','D'].forEach(d=>html+='<div class="cal-dow">'+d+'</div>');
+  for(let i=0;i<offset;i++)html+='<div class="cal-day blank"></div>';
+  let fichados=0;
+  for(let d=1;d<=total;d++){
+    const key=y+'-'+pad(m+1)+'-'+pad(d);
+    const info=dias[key];
+    const dow=(offset+d-1)%7;
+    let cls='cal-day'+(dow>=5?' we':'')+(key===hoy?' today':'');
+    let tip='';
+    if(info&&info.entrada){
+      fichados++;
+      if(info.salida){cls+=' full';tip='Entrada '+hora(info.entrada)+', salida '+hora(info.salida)+' ('+horasTxt(info.entrada,info.salida)+')';}
+      else{cls+=' part';tip='Entrada '+hora(info.entrada)+', sin salida';}
+    }
+    html+='<div class="'+cls+'"'+(tip?' title="'+esc(tip)+'"':'')+'>'+d+'</div>';
+  }
+  html+='</div><div class="legend"><span><i style="background:var(--ok)"></i>Entrada y salida</span><span><i style="background:var(--warn)"></i>Falta la salida</span><span>'+fichados+' día'+(fichados===1?'':'s')+' este mes</span></div>';
+  el.innerHTML=html;
+  el.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>{
+    const n=new Date(y,m+Number(b.dataset.nav),1);
+    cal.y=n.getFullYear();cal.m=n.getMonth();
+    renderCalendario(el,dias,cal);
+  });
+}
+const mesActual=()=>{const [y,m]=hoyKey().split('-');return {y:Number(y),m:Number(m)-1};};
+
+/* ---------- PASANTE: fichar + calendario propio ---------- */
+let calPas=mesActual(), diasPas={};
+
+const FMT_HORA=new Intl.DateTimeFormat('es-AR',{timeZone:TZ,hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'});
+function tickReloj(){
+  if($('secPasante').hidden)return;
+  const d=new Date(), [h,m,s]=FMT_HORA.format(d).split(':');
+  $('relojHM').textContent=h+':'+m; $('relojS').textContent=s;
+  {const t=d.toLocaleDateString('es-AR',{timeZone:TZ,weekday:'long',day:'numeric',month:'long'});$('relojFecha').textContent=t.charAt(0).toUpperCase()+t.slice(1);}
+}
+setInterval(tickReloj,1000);
+
+function actualizarEstadoHoy(){
+  const d=diasPas[hoyKey()], e=$('estadoHoy');
+  if(!d||!d.entrada){
+    e.textContent='Todavía no marcaste tu entrada de hoy.';
+    $('btnEntrada').disabled=false; $('btnSalida').disabled=true;
+  }else if(!d.salida){
+    e.textContent='Entraste a las '+hora(d.entrada)+'. Cuando termines, marcá la salida.';
+    $('btnEntrada').disabled=true; $('btnSalida').disabled=false;
+  }else{
+    e.textContent='Jornada completa: de '+hora(d.entrada)+' a '+hora(d.salida)+', '+horasTxt(d.entrada,d.salida)+'.';
+    $('btnEntrada').disabled=true; $('btnSalida').disabled=true;
+  }
+}
+
+async function cargarMiCalendario(){
+  calPas=mesActual();diasPas={};
+  renderCalendario($('calPasante'),diasPas,calPas);
+  actualizarEstadoHoy();
+  const {data,error}=await sb.rpc('mis_fichajes',{p_nombre:pasanteSes.nombre,p_pin:pasanteSes.pin});
+  if(error||!data||!data.ok)return;
+  diasPas=agruparDias(data.fichajes||[]);
+  renderCalendario($('calPasante'),diasPas,calPas);
+  actualizarEstadoHoy();
+}
+
+function getPos(){
+  return new Promise((res,rej)=>{
+    if(!navigator.geolocation)return rej({code:0});
+    navigator.geolocation.getCurrentPosition(p=>res(p.coords),e=>rej(e),{enableHighAccuracy:true,timeout:15000,maximumAge:0});
   });
 }
 
 async function marcar(tipo){
-  const nombre=$('nombre').value.trim();
-  const pin=$('pin').value.trim();
-  const status=$('status');
-  if(!nombre||!pin){status.textContent='Completá nombre y clave.';status.style.color='var(--bad)';return;}
-  if(!sb){status.textContent='Falta configurar Supabase (revisá SUPABASE_URL/ANON_KEY en el código).';status.style.color='var(--bad)';return;}
-
-  const enviar=async(lat,lng)=>{
-    // La validación real del PIN ocurre DENTRO de la base de datos
-    // (función marcar_fichaje en supabase-schema.sql), así el PIN de
-    // cada pasante nunca viaja al navegador de otra persona.
-    const {data,error}=await sb.rpc('marcar_fichaje',{
-      p_nombre:nombre, p_pin:pin, p_tipo:tipo, p_lat:lat, p_lng:lng
-    });
-    if(error){status.textContent='Error al guardar. Probá de nuevo.';status.style.color='var(--bad)';return;}
-    if(!data||!data.ok){
-      const msg=data&&data.error==='pin_incorrecto' ? 'La clave no coincide.'
-        : data&&data.error==='pasante_no_encontrado' ? 'No encontramos ese nombre en la lista de pasantes autorizados.'
-        : 'No se pudo registrar el fichaje.';
-      status.textContent=msg;status.style.color='var(--bad)';return;
+  const st=$('status');
+  $('btnEntrada').disabled=$('btnSalida').disabled=true;
+  try{
+    msg(st,'Obteniendo tu ubicación…');
+    let c;
+    if(window.FICHAJE_SIN_GEOCERCA){c={latitude:null,longitude:null};}
+    else try{c=await getPos();}
+    catch(e){
+      msg(st,e&&e.code===1?'Bloqueaste el permiso de ubicación. Activalo en el navegador/teléfono para poder fichar.':'No pudimos obtener tu ubicación. Probá de nuevo con el GPS activado.','bad');
+      return;
     }
-    status.textContent=(tipo==='entrada'?'✅ Entrada registrada — ':'✅ Salida registrada — ')+data.nombre;
-    status.style.color='var(--ok)';
-    $('pin').value='';
-  };
-
-  if(navigator.geolocation){
-    navigator.geolocation.getCurrentPosition(
-      pos=>enviar(pos.coords.latitude,pos.coords.longitude),
-      ()=>enviar(null,null),
-      {timeout:4000}
-    );
-  }else{
-    enviar(null,null);
+    msg(st,'Registrando…');
+    const {data,error}=await sb.rpc('marcar_fichaje',{
+      p_nombre:pasanteSes.nombre,p_pin:pasanteSes.pin,p_tipo:tipo,p_lat:c.latitude,p_lng:c.longitude
+    });
+    if(error){msg(st,'Error al guardar. Probá de nuevo.','bad');return;}
+    if(!data||!data.ok){
+      const e=data&&data.error;
+      const m=e==='fuera_de_zona' ? 'Estás a unos '+data.distancia+' m de “'+data.sede+'”. Tenés que estar a menos de '+data.radio+' m para fichar.'
+        : e==='sedes_no_configuradas' ? 'Tu sede todavía no está activa. Avisale a Recursos Humanos.'
+        : e==='sin_sede_asignada' ? 'No tenés una sede asignada. Avisale a Recursos Humanos.'
+        : e==='sin_ubicacion' ? 'No recibimos tu ubicación.'
+        : e==='ya_entrada' ? 'Ya marcaste tu entrada hoy.'
+        : e==='ya_salida' ? 'Ya marcaste tu salida hoy.'
+        : e==='sin_entrada' ? 'Primero tenés que marcar la entrada.'
+        : e==='pin_incorrecto'||e==='pasante_no_encontrado' ? 'Tu usuario ya no es válido. Volvé a iniciar sesión.'
+        : 'No se pudo registrar el fichaje.';
+      msg(st,m,'bad');return;
+    }
+    msg(st,(tipo==='entrada'?'Entrada marcada':'Salida marcada')+' a las '+new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',hourCycle:'h23',timeZone:TZ})+' en '+data.sede+'.','ok');
+    await cargarMiCalendario();
+  }finally{
+    actualizarEstadoHoy();
   }
 }
 $('btnEntrada').onclick=()=>marcar('entrada');
 $('btnSalida').onclick=()=>marcar('salida');
 
-/* ---------- Panel RRHH (protegido con Supabase Auth) ---------- */
-
-$('btnEntrarRRHH').onclick=async()=>{
-  const s=$('statusRRHH');
-  if(!sb){s.textContent='Falta configurar Supabase.';s.style.color='var(--bad)';return;}
-  const email=$('emailRRHH').value.trim();
-  const password=$('claveRRHH').value;
-  s.textContent='Ingresando…';s.style.color='var(--muted)';
-  const {error}=await sb.auth.signInWithPassword({email,password});
-  if(error){s.textContent='Email o contraseña incorrectos.';s.style.color='var(--bad)';return;}
-  mostrarPanel();
-};
-
-$('btnSalirRRHH').onclick=async()=>{
-  if(sb)await sb.auth.signOut();
-  $('panelContent').style.display='none';
-  $('panelLogin').style.display='block';
-  $('claveRRHH').value='';
-};
-
-async function mostrarPanel(){
-  $('panelLogin').style.display='none';
-  $('panelContent').style.display='block';
-  await cargarPasantesAdmin();
-  await cargarHoy();
-  suscribirRealtime();
-}
-
-/* ---------- Alta de pasantes (requiere sesión RRHH por RLS) ---------- */
-
+/* ---------- RRHH: pasantes (alta / baja) ---------- */
 async function agregarPasante(){
   const nombre=$('nuevoNombre').value.trim();
   const pin=$('nuevoPin').value.trim();
@@ -276,143 +638,507 @@ async function agregarPasante(){
   const fecha_inicio=$('nuevoInicio').value||null;
   const fecha_fin=$('nuevoFin').value||null;
   const status=$('statusPasante');
-  if(!nombre||!pin){status.textContent='Completá al menos nombre y PIN.';status.style.color='var(--bad)';return;}
-  if(!sb){status.textContent='No se pudo conectar.';status.style.color='var(--bad)';return;}
-  const id=nombre.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,'_');
-  const {error}=await sb.from('pasantes').upsert({id,nombre,pin,area,horario,fecha_inicio,fecha_fin});
-  if(error){status.textContent='Error al guardar (¿tenés la sesión de RRHH activa?).';status.style.color='var(--bad)';return;}
-  status.textContent='✅ Pasante agregado.';status.style.color='var(--ok)';
-  $('nuevoNombre').value='';$('nuevoPin').value='';$('nuevoArea').value='';$('nuevoHorario').value='';$('nuevoInicio').value='';$('nuevoFin').value='';
+  if(!nombre||!pin){msg(status,'Completá al menos nombre y PIN.','bad');return;}
+  if(!/^\d{4,6}$/.test(pin)){msg(status,'El PIN tiene que ser de 4 a 6 dígitos.','bad');return;}
+  const sedes_ids=[...$('nuevoSedes').querySelectorAll('input:checked')].map(i=>Number(i.value));
+  if(!sedes_ids.length){msg(status,'Elegí al menos una sede donde pueda fichar.','bad');return;}
+  const id=nombre.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,'_');
+  const {error}=await sb.from('pasantes').upsert({id,nombre,pin,area,horario,fecha_inicio,fecha_fin,sedes_ids});
+  if(error){msg(status,'Error al guardar (¿tenés la sesión de RRHH activa?).','bad');return;}
+  msg(status,'Pasante agregado.','ok');
+  ['nuevoNombre','nuevoPin','nuevoArea','nuevoHorario','nuevoInicio','nuevoFin'].forEach(i=>$(i).value='');
+  $('nuevoSedes').querySelectorAll('input').forEach(i=>i.checked=false);
   cargarPasantesAdmin();
-  cargarDatalist();
 }
 $('btnAgregar').onclick=agregarPasante;
 
 async function cargarPasantesAdmin(){
-  const {data,error}=await sb.from('pasantes').select('*').order('nombre');
+  const {data,error}=await sb.from('pasantes').select('id,nombre,area,horario,fecha_inicio,fecha_fin,sedes_ids').order('nombre');
   if(error)return;
+  pasantesLista=data||[];
+  const nombreSede={};sedesLista.forEach(x=>nombreSede[x.id]=x.nombre);
   const tbody=$('tablaPasantes').querySelector('tbody');
   tbody.innerHTML='';
-  pasantesArea={};
-  (data||[]).forEach(v=>{
-    pasantesArea[v.nombre]=v.area||'—';
+  $('emptyPasantes').style.display=pasantesLista.length?'none':'block';
+  pasantesLista.forEach(v=>{
     const tr=document.createElement('tr');
-    tr.innerHTML='<td>'+v.nombre+'</td><td>'+(v.area||'—')+'</td><td>'+(v.horario||'—')+'</td><td>'+(v.fecha_inicio||'—')+'</td><td>'+(v.fecha_fin||'—')+'</td>';
+    tr.innerHTML='<td>'+esc(v.nombre)+'</td><td>'+esc(v.area||'—')+'</td><td>'+esc((v.sedes_ids||[]).map(i=>nombreSede[i]).filter(Boolean).join(', ')||'Sin sede')+'</td><td>'+esc(v.horario||'—')+'</td><td>'+esc(v.fecha_inicio||'—')+'</td><td>'+esc(v.fecha_fin||'—')+
+      '</td><td style="white-space:nowrap;"><button class="btn-mini" data-sedes="'+esc(v.id)+'">Sedes</button> <button class="btn-mini" data-hist="'+esc(v.nombre)+'">Historial</button> <button class="btn-mini danger" data-del="'+esc(v.id)+'" data-nombre="'+esc(v.nombre)+'">Eliminar</button></td>';
     tbody.appendChild(tr);
   });
 }
 
-/* ---------- Registros de hoy ---------- */
+$('tablaPasantes').addEventListener('click',async e=>{
+  const sd=e.target.closest('[data-sedes]');
+  if(sd){const p=pasantesLista.find(x=>x.id===sd.dataset.sedes);if(p)abrirDlgSedes(p);return;}
+  const h=e.target.closest('[data-hist]');
+  if(h){histSel=h.dataset.hist;irSeccion('historial');return;}
+  const b=e.target.closest('[data-del]');
+  if(!b)return;
+  const id=b.dataset.del, nombre=b.dataset.nombre;
+  if(!confirm('¿Eliminar a '+nombre+'?\n\nYa no va a poder iniciar sesión ni fichar.'))return;
+  const borrarHist=confirm('¿Borrar también todo su historial de fichadas?\n\nAceptar = borrar el historial\nCancelar = conservarlo');
+  const {data,error}=await sb.from('pasantes').delete().eq('id',id).select();
+  if(error||!data||!data.length){msg($('statusPasante'),'No se pudo eliminar (¿sesión de RRHH activa?).','bad');return;}
+  if(borrarHist){
+    const {error:e2}=await sb.from('fichajes').delete().eq('nombre',nombre);
+    if(e2){msg($('statusPasante'),'Pasante eliminado, pero no se pudo borrar su historial.','bad');cargarPasantesAdmin();return;}
+  }
+  msg($('statusPasante'),nombre+' eliminado'+(borrarHist?' junto con su historial.':'. Su historial se conservó.'),'ok');
+  cargarPasantesAdmin();
+});
 
-function horasEntre(a,b){
-  const ms=new Date(b)-new Date(a);
-  if(ms<=0)return '—';
-  return (ms/3600000).toFixed(1)+' hs';
-}
-
-let filasHoy=[];
-let pasantesArea={};
-
+/* ---------- RRHH: registros de hoy ---------- */
 async function cargarHoy(){
-  const hoy=todayKey();
-  const {data,error}=await sb.from('fichajes').select('*').eq('dia',hoy).order('ts');
+  if(!pasantesLista.length){
+    const {data}=await sb.from('pasantes').select('id,nombre,area,horario,fecha_inicio,fecha_fin').order('nombre');
+    pasantesLista=data||[];
+  }
+  const {data,error}=await sb.from('fichajes').select('*').eq('dia',hoyKey()).order('ts');
   if(error)return;
   renderHoy(data||[]);
 }
 
 function renderHoy(rows){
+  const areaDe={};pasantesLista.forEach(p=>areaDe[p.nombre]=p.area||'—');
   const porNombre={};
   rows.forEach(v=>{
-    porNombre[v.nombre]=porNombre[v.nombre]||{};
-    if(v.tipo==='entrada'){porNombre[v.nombre].entrada=v.ts;porNombre[v.nombre].lat=v.ubicacion_lat;porNombre[v.nombre].lng=v.ubicacion_lng;}
-    else{porNombre[v.nombre].salida=v.ts;}
+    const d=porNombre[v.nombre]||(porNombre[v.nombre]={});
+    if(v.tipo==='entrada'){d.entrada=v.ts;d.lat=v.ubicacion_lat;d.lng=v.ubicacion_lng;d.sede=v.sede;}
+    else d.salida=v.ts;
   });
   const tbody=$('tablaHoy').querySelector('tbody');
   const names=Object.keys(porNombre).sort();
   tbody.innerHTML='';
   $('emptyHoy').style.display=names.length?'none':'block';
-  filasHoy=[];
   const sinSalida=[];
   names.forEach(n=>{
     const r=porNombre[n];
-    const area=pasantesArea[n]||'—';
-    const horas=(r.entrada&&r.salida)?horasEntre(r.entrada,r.salida):'—';
-    const ubic=(r.lat!=null)?('<a href="https://maps.google.com/?q='+r.lat+','+r.lng+'" target="_blank">📍 ver</a>'):'—';
+    const ubic=(r.lat!=null)?('<a href="https://maps.google.com/?q='+r.lat+','+r.lng+'" target="_blank" rel="noopener">'+esc(r.sede||'Ver mapa')+'</a>'):'—';
     if(r.entrada&&!r.salida)sinSalida.push(n);
     const tr=document.createElement('tr');
-    tr.innerHTML='<td>'+n+'</td><td>'+area+'</td><td>'+(r.entrada?'<span class="tag tag-in">'+timeStr(r.entrada)+'</span>':'—')+'</td><td>'+(r.salida?'<span class="tag tag-out">'+timeStr(r.salida)+'</span>':'—')+'</td><td>'+horas+'</td><td>'+ubic+'</td>';
+    tr.innerHTML='<td>'+esc(n)+'</td><td>'+esc(areaDe[n]||'—')+'</td><td>'+(r.entrada?'<span class="tag tag-in">'+hora(r.entrada)+'</span>':'—')+'</td><td>'+(r.salida?'<span class="tag tag-out">'+hora(r.salida)+'</span>':'—')+'</td><td>'+(r.entrada&&r.salida?horasTxt(r.entrada,r.salida):'—')+'</td><td>'+ubic+'</td>';
     tbody.appendChild(tr);
-    filasHoy.push({nombre:n,area,entrada:r.entrada?timeStr(r.entrada):'',salida:r.salida?timeStr(r.salida):'',horas});
   });
   if(sinSalida.length){
     $('alertaCard').style.display='block';
-    $('listaAlertas').textContent=sinSalida.join(', ')+' — todavía no marcaron salida hoy.';
+    $('listaAlertas').textContent=sinSalida.join(', ')+' todavía no marcaron la salida de hoy.';
   }else{
     $('alertaCard').style.display='none';
   }
 }
 
 function suscribirRealtime(){
-  sb.channel('fichajes-hoy')
-    .on('postgres_changes',{event:'*',schema:'public',table:'fichajes'},()=>cargarHoy())
+  if(!sb||realtimeOn)return;
+  realtimeOn=true;
+  sb.channel('rrhh-live')
+    .on('postgres_changes',{event:'*',schema:'public',table:'fichajes'},()=>{
+      if(!$('secHoy').hidden)cargarHoy();
+      if(!$('secHistorial').hidden)cargarHistorial();
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'pasantes'},()=>{
+      if(!$('secPasantes').hidden)cargarPasantesAdmin();
+    })
     .subscribe();
 }
 
-function exportarCSV(){
-  let csv='Pasante,Area,Entrada,Salida,Horas\n';
-  filasHoy.forEach(f=>{
-    csv+=[f.nombre,f.area,f.entrada,f.salida,f.horas].map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')+'\n';
+/* ---------- RRHH: historial por persona + exportar ---------- */
+let histSel=null, histRows=[], histDias={}, calHist=mesActual();
+
+async function iniciarHistorial(){
+  const {data}=await sb.from('pasantes').select('id,nombre,area,horario,fecha_inicio,fecha_fin').order('nombre');
+  pasantesLista=data||[];
+  const sel=$('histPasante');
+  sel.innerHTML=pasantesLista.length?'':'<option value="">— no hay pasantes —</option>';
+  pasantesLista.forEach(p=>{const o=document.createElement('option');o.value=p.nombre;o.textContent=p.nombre+(p.area?' ('+p.area+')':'');sel.appendChild(o);});
+  if(!histSel||!pasantesLista.some(p=>p.nombre===histSel))histSel=pasantesLista.length?pasantesLista[0].nombre:null;
+  sel.value=histSel||'';
+  if(!$('histDesde').value){
+    const k=hoyKey();$('histDesde').value=k.slice(0,8)+'01';$('histHasta').value=k;
+  }
+  calHist=mesActual();
+  cargarHistorial();
+}
+
+async function cargarHistorial(){
+  if(!histSel){histRows=[];histDias={};renderHistorial();return;}
+  const {data,error}=await sb.from('fichajes').select('*').eq('nombre',histSel).order('ts').limit(10000);
+  if(error)return;
+  histRows=data||[];
+  histDias=agruparDias(histRows);
+  renderHistorial();
+}
+
+function diasFiltrados(){
+  const d=$('histDesde').value, h=$('histHasta').value;
+  return Object.values(histDias)
+    .filter(x=>x.entrada&&(!d||x.dia>=d)&&(!h||x.dia<=h))
+    .sort((a,b)=>a.dia<b.dia?-1:1);
+}
+
+function renderHistorial(){
+  renderCalendario($('calRRHH'),histDias,calHist);
+  const lista=diasFiltrados();
+  const tbody=$('tablaHist').querySelector('tbody');
+  tbody.innerHTML='';
+  $('emptyHist').style.display=lista.length?'none':'block';
+  let totalH=0;
+  lista.slice().reverse().forEach(x=>{
+    if(x.salida)totalH+=horasNum(x.entrada,x.salida);
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td>'+fechaCorta(x.dia)+'</td><td><span class="tag tag-in">'+hora(x.entrada)+'</span></td><td>'+(x.salida?'<span class="tag tag-out">'+hora(x.salida)+'</span>':'<span class="badge">sin salida</span>')+'</td><td>'+(x.salida?horasTxt(x.entrada,x.salida):'—')+'</td><td>'+esc(x.sede||'—')+'</td>';
+    tbody.appendChild(tr);
   });
-  const blob=new Blob([csv],{type:'text/csv'});
+  $('histResumen').textContent=histSel?(lista.length+' día'+(lista.length===1?'':'s')+' fichado'+(lista.length===1?'':'s')+', '+totalH.toFixed(1)+' hs en total'):'';
+  $('btnExportar').disabled=!lista.length;
+}
+$('histPasante').onchange=e=>{histSel=e.target.value;calHist=mesActual();cargarHistorial();};
+$('histDesde').onchange=$('histHasta').onchange=renderHistorial;
+
+function exportarHistorial(){
+  const lista=diasFiltrados();
+  if(!lista.length)return;
+  const p=pasantesLista.find(x=>x.nombre===histSel)||{};
+  const celda=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+  const sep=';';                                        // Excel en español usa ; como separador
+  let csv='Pasante'+sep+'Area'+sep+'Fecha'+sep+'Entrada'+sep+'Salida'+sep+'Horas'+sep+'Sede\n';
+  let tot=0;
+  lista.forEach(x=>{
+    const h=x.salida?horasNum(x.entrada,x.salida):0; tot+=h;
+    csv+=[histSel,p.area||'',fechaCorta(x.dia),hora(x.entrada),x.salida?hora(x.salida):'',x.salida?h.toFixed(2).replace('.',','):'',x.sede||''].map(celda).join(sep)+'\n';
+  });
+  csv+=['TOTAL','','','','',tot.toFixed(2).replace('.',','),''].map(celda).join(sep)+'\n';
+  const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});   // BOM para que Excel respete tildes
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
-  a.href=url;a.download='fichajes_'+todayKey()+'.csv';a.click();
-  URL.revokeObjectURL(url);
+  const slug=histSel.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'_');
+  a.href=url;a.download='historial_'+slug+'_'+hoyKey()+'.csv';a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
-$('btnExportar').onclick=exportarCSV;
+$('btnExportar').onclick=exportarHistorial;
+
+/* ---------- RRHH: sedes (geocerca automática) ---------- */
+let sedesLista=[];
+async function cargarSedesLista(){
+  const {data}=await sb.from('sedes').select('*').order('id');
+  sedesLista=data||[];
+  return sedesLista;
+}
+
+/* Busca las coordenadas a partir de la dirección (OpenStreetMap / Nominatim).
+   Acepta una dirección simple ("Av. X 123") o completa estilo Google Maps
+   ("Av. X 123, B1878 Quilmes, Provincia de Buenos Aires"). */
+function normalizarDireccion(d){
+  return String(d||'')
+    .replace(/\bR\.?\s?P\.?\s*(\d+)/i,'Ruta Provincial $1')
+    .replace(/\bN[°º]\s*/gi,'')
+    .replace(/\b(\d+)\s*\/\s*\d+\b/g,'$1')
+    .replace(/\s+/g,' ').trim();
+}
+/* Separa "Calle 123, B1878 Quilmes, Provincia de Buenos Aires" en sus partes. */
+function partesDireccion(texto){
+  const p=String(texto||'').split(',').map(x=>x.trim()).filter(Boolean);
+  if(p.length>=4&&!/\d/.test(p[0]))p.shift();                  // nombre de edificio, ej. "GFT, Av. Mitre 2900, ..."
+  const calle=p[0]||'';
+  let localidad='', cp='', provincia='';
+  if(p.length>=2){
+    const m=p[1].match(/^([A-Za-z]?\d{4}[A-Za-z]{0,3})\s+(.+)$/);
+    if(m){cp=m[1];localidad=m[2];}else if(!/^[A-Za-z]?\d{4}[A-Za-z]{0,3}$/.test(p[1])){localidad=p[1];}else{cp=p[1];}
+  }
+  if(p.length>=3)provincia=p[p.length-1].replace(/^provincia de\s+/i,'');
+  return {calle,localidad,cp,provincia};
+}
+/* Coordenadas pegadas directamente: "-34.6727, -58.3358" o un enlace largo de Google Maps. */
+function coordsDeTexto(t){
+  t=String(t||'');
+  const m=t.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/)
+    ||t.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
+    ||t.match(/[?&](?:q|ll|query)=(-?\d+\.\d+)(?:,|%2C)\s*(-?\d+\.\d+)/i)
+    ||t.match(/^\s*(-?\d{1,2}\.\d+)\s*[,;]\s*(-?\d{1,3}\.\d+)\s*$/);
+  if(!m)return null;
+  const lat=Number(m[1]), lng=Number(m[2]);
+  return (Math.abs(lat)<=90&&Math.abs(lng)<=180)?{lat,lng}:null;
+}
+/* Cada línea puede ser:
+     Av. Bartolomé Mitre 2900, B1872 Sarandí, Provincia de Buenos Aires      (el nombre se arma solo)
+     Autos del Sur Sarandí: Av. Bartolomé Mitre 2900, B1872 Sarandí, ...      (nombre propio)
+     -34.6727, -58.3358   o   enlace de Google Maps                           (coordenadas directas)  */
+function parsearSedes(texto){
+  return String(texto||'').split(/\r?\n/).map(l=>l.trim()).filter(Boolean).map(l=>{
+    const i=l.indexOf(':');
+    let nombre='', dir=l;
+    if(i>0&&i<=80&&!/^https?$/i.test(l.slice(0,i).trim())){nombre=l.slice(0,i).trim();dir=l.slice(i+1).trim();}
+    const coords=coordsDeTexto(dir);
+    if(coords){
+      const txt=coords.lat.toFixed(5)+', '+coords.lng.toFixed(5);
+      return {nombre:nombre||('Sede '+txt),auto:false,direccion:'Coordenadas '+txt,localidad:'',coords};
+    }
+    const pd=partesDireccion(dir);
+    const auto=!nombre;
+    if(auto)nombre=pd.localidad?(NOMBRE_EMPRESA+' '+pd.localidad):('Sede '+pd.calle);
+    return {nombre,auto,direccion:dir,localidad:pd.localidad,coords:null,calle:pd.calle};
+  }).filter(f=>f.direccion);
+}
+
+function expandirVia(v){
+  return v.replace(/^\s*Av\.?\s+/i,'Avenida ').replace(/^\s*Gral\.?\s+/i,'General ').replace(/^\s*Pte\.?\s+/i,'Presidente ').replace(/^\s*Dr\.?\s+/i,'Doctor ');
+}
+function separarNumero(calle){
+  const m=String(calle).match(/^(.*?)[\s,]+(\d{1,5})$/);
+  return m?{via:m[1].trim(),num:m[2]}:{via:String(calle).trim(),num:''};
+}
+const pausa=ms=>new Promise(r=>setTimeout(r,ms));
+async function consultarMapa(params){
+  const u=new URL('https://nominatim.openstreetmap.org/search');
+  const base={format:'jsonv2',limit:1,addressdetails:1,countrycodes:'ar','accept-language':'es'};
+  Object.entries({...base,...params}).forEach(([k,v])=>{if(v!==''&&v!=null)u.searchParams.set(k,v);});
+  const r=await fetch(u);
+  if(!r.ok)return null;
+  const j=await r.json();
+  return (j&&j.length)?j[0]:null;
+}
+/* Devuelve {lat,lng,texto,precision:'exacta'|'calle'} | null | {error:'red'}.
+   Prueba varias formas de preguntar (búsqueda estructurada y libre) y se queda con la
+   primera que encuentra el número exacto; si ninguna, con la ubicación de la calle (aproximada). */
+async function geocodificar(direccion,localidad){
+  const pd=partesDireccion(direccion);
+  const loc=(localidad||'').trim()||pd.localidad;
+  const prov=pd.provincia||'Buenos Aires';
+  const cp=(pd.cp||'').replace(/^[A-Za-z]/,'').slice(0,4);
+  const calle=normalizarDireccion(pd.calle);
+  const {via,num}=separarNumero(calle);
+  const intentos=[];
+  if(num){
+    intentos.push({street:num+' '+expandirVia(via),city:loc,state:prov,country:'Argentina',postalcode:cp});
+    intentos.push({street:num+' '+via,city:loc,state:prov,country:'Argentina'});
+  }
+  intentos.push({q:[calle,cp&&loc?cp+' '+loc:loc,prov,'Argentina'].filter(Boolean).join(', ')});
+  intentos.push({q:[expandirVia(calle),loc,'Argentina'].filter(Boolean).join(', ')});
+  if(num)intentos.push({street:expandirVia(via),city:loc,state:prov,country:'Argentina'});   // solo la calle
+  let aprox=null;
+  try{
+    for(let i=0;i<intentos.length;i++){
+      if(i)await pausa(900);                                   // el servicio de mapas pide ~1 consulta por segundo
+      const hit=await consultarMapa(intentos[i]);
+      if(!hit)continue;
+      const res={lat:Number(Number(hit.lat).toFixed(6)),lng:Number(Number(hit.lon).toFixed(6)),texto:hit.display_name};
+      const exacta=!num||(hit.address&&hit.address.house_number);
+      if(exacta)return {...res,precision:'exacta'};
+      if(!aprox)aprox={...res,precision:'calle'};
+    }
+    return aprox;
+  }catch{ return {error:'red'}; }
+}
+async function autoGeocodificarSedes(){
+  if(!sb)return;
+  await cargarSedesLista();
+  let cambio=false;
+  for(const s of sedesLista){
+    if(s.activa&&(s.lat==null||s.lng==null)){
+      const r=await geocodificar(s.direccion,s.localidad);
+      if(r&&r.lat!=null){await sb.from('sedes').update({lat:r.lat,lng:r.lng,ubicacion_texto:r.texto,ubicacion_aprox:r.precision!=='exacta'}).eq('id',s.id);cambio=true;}
+      await pausa(900);
+    }
+  }
+  if(cambio)await cargarSedesLista();
+  avisoSedes();
+  if(!$('secSedes').hidden)cargarSedes();
+}
+/* Avisa en "Hoy" si alguna sede activa no quedó bien ubicada (los pasantes no podrían fichar ahí). */
+function avisoSedes(){
+  const sin=sedesLista.filter(s=>s.activa&&(s.lat==null||s.lng==null)).map(s=>s.nombre);
+  const aprox=sedesLista.filter(s=>s.activa&&s.lat!=null&&s.ubicacion_aprox).map(s=>s.nombre);
+  const partes=[];
+  if(sin.length)partes.push('Sin ubicar, los pasantes no pueden fichar ahí: '+sin.join(', ')+'.');
+  if(aprox.length)partes.push('Ubicación aproximada, conviene verificarla: '+aprox.join(', ')+'.');
+  $('alertaSedes').style.display=partes.length?'block':'none';
+  $('listaAlertaSedes').textContent=partes.join(' ')+(partes.length?' Revisalas en la pestaña Sedes.':'');
+}
+
+function renderChecksSedes(){
+  const c=$('nuevoSedes');
+  c.innerHTML='';
+  sedesLista.forEach(s=>{
+    const l=document.createElement('label');l.className='chk';
+    l.innerHTML='<input type="checkbox" value="'+s.id+'">'+esc(s.nombre)+(s.activa?'':' (inactiva)');
+    c.appendChild(l);
+  });
+  $('nuevoSedesHint').textContent=!sedesLista.length?'Todavía no hay sedes. Importalas primero en la pestaña Sedes.':sedesLista.some(s=>!s.activa)?'Las sedes inactivas se activan en la sección Sedes; hasta entonces el pasante no podrá fichar ahí.':'';
+}
+
+let dlgPas=null;
+function abrirDlgSedes(p){
+  dlgPas=p;
+  $('dlgTitulo').textContent='Sedes de '+p.nombre;
+  $('dlgLista').innerHTML=sedesLista.map(s=>'<label class="chk"><input type="checkbox" value="'+s.id+'" '+((p.sedes_ids||[]).includes(s.id)?'checked':'')+'>'+esc(s.nombre)+(s.activa?'':' (inactiva)')+'</label>').join('');
+  msg($('dlgStatus'),'');
+  $('dlgSedes').showModal();
+}
+$('dlgGuardar').onclick=async e=>{
+  e.preventDefault();
+  const ids=[...$('dlgLista').querySelectorAll('input:checked')].map(i=>Number(i.value));
+  if(!ids.length){msg($('dlgStatus'),'Elegí al menos una sede.','bad');return;}
+  const {data,error}=await sb.from('pasantes').update({sedes_ids:ids}).eq('id',dlgPas.id).select();
+  if(error||!data||!data.length){msg($('dlgStatus'),'No se pudo guardar.','bad');return;}
+  $('dlgSedes').close();
+  cargarPasantesAdmin();
+};
+
+async function cargarSedes(){
+  await cargarSedesLista();
+  const cont=$('listaSedes');
+  cont.innerHTML=sedesLista.length?'':'<p class="empty">Todavía no hay sedes. Importá la primera con el cuadro de arriba.</p>';
+  sedesLista.forEach(s=>{
+    const ok=s.lat!=null&&s.lng!=null;
+    const box=document.createElement('div');
+    box.className='sede'+(s.activa&&ok?'':' pendiente');
+    box.dataset.id=s.id;
+    const estado=!s.activa?'<span class="badge">Inactiva</span>':ok&&s.ubicacion_aprox?'<span class="badge">Ubicación aproximada</span>':ok?'<span class="badge ok">Lista para fichar</span>':'<span class="badge">Falta ubicarla</span>';
+    const donde=ok?('Ubicada en: '+esc(s.ubicacion_texto||(s.lat+', '+s.lng))+'. <a target="_blank" rel="noopener" href="https://www.google.com/maps?q='+s.lat+','+s.lng+'">Ver en el mapa</a>'+(s.ubicacion_aprox?'<br><b>Solo se encontró la calle, no el número exacto.</b> Verificá el punto en el mapa; si no coincide, pegá las coordenadas correctas en Ajustes avanzados.':'')):'Todavía no se buscó la ubicación. Se busca sola al activar la sede.';
+    box.innerHTML=
+      '<div class="row-between" style="margin-bottom:4px;"><h3>'+esc(s.nombre)+'</h3><label class="switch"><input type="checkbox" class="s-activa" '+(s.activa?'checked':'')+' aria-label="Sede activa">Activa</label></div>'+
+      '<div class="hint" style="margin:0 0 12px;">'+esc(s.direccion||'')+'&nbsp; '+estado+'</div>'+
+      '<div class="s-estado">'+donde+'</div>'+
+      '<details class="avanzado"><summary>Ajustes avanzados</summary>'+
+        '<div class="row" style="align-items:flex-end;"><div style="flex:1;min-width:220px;"><label>Localidad (si la dirección existe en varias)</label><input class="s-loc" value="'+esc(s.localidad||'')+'" placeholder="Por ejemplo: Lanús"></div><button class="btn btn-ghost btn-sm" data-act="buscar" style="margin-bottom:16px;">Buscar de nuevo</button></div>'+
+        '<div class="grid2">'+
+          '<div><label>Radio permitido (metros)</label><input class="s-radio" type="number" min="30" max="5000" value="'+s.radio_m+'"></div>'+
+          '<div></div>'+
+          '<div><label>Latitud</label><input class="s-lat" inputmode="decimal" value="'+(ok?s.lat:'')+'" placeholder="-34.6037"></div>'+
+          '<div><label>Longitud</label><input class="s-lng" inputmode="decimal" value="'+(ok?s.lng:'')+'" placeholder="-58.3816"></div>'+
+        '</div>'+
+        '<div class="row"><button class="btn btn-main btn-sm" data-act="save">Guardar coordenadas</button><button class="btn-mini danger" data-act="borrar">Eliminar sede</button></div>'+
+      '</details>'+
+      '<div class="hint s-status" role="status"></div>';
+    cont.appendChild(box);
+  });
+}
+
+/* ---- Importar sedes pegando "Nombre: dirección completa" ---- */
+async function importarSedes(){
+  const filas=parsearSedes($('impTexto').value), ul=$('impResultado');
+  ul.innerHTML='';
+  if(!filas.length){ul.innerHTML='<li class="mal">Pegá al menos una dirección, una por línea.</li>';return;}
+  $('btnImportar').disabled=true;
+  const linea=(txt,cls)=>{const li=document.createElement('li');if(cls)li.className=cls;li.textContent=txt;ul.appendChild(li);return li;};
+  const misma=(a,b)=>normalizarDireccion(a).toLowerCase()===normalizarDireccion(b).toLowerCase();
+  try{
+    await cargarSedesLista();
+    for(let i=0;i<filas.length;i++){
+      const f=filas[i];
+      if(i)await pausa(900);
+      const li=linea(f.nombre+': buscando la ubicación…');
+      // ¿ya existe? por nombre, o por la misma dirección
+      let s=sedesLista.find(x=>x.nombre.trim().toLowerCase()===f.nombre.toLowerCase()||misma(x.direccion||'',f.direccion));
+      if(s&&f.auto&&!misma(s.direccion||'',f.direccion)){        // mismo nombre automático pero otra dirección: se distingue por la calle
+        f.nombre+=' ('+f.calle+')';
+        s=sedesLista.find(x=>x.nombre.trim().toLowerCase()===f.nombre.toLowerCase());
+      }
+      if(s){
+        const {error}=await sb.from('sedes').update({direccion:f.direccion,localidad:f.localidad}).eq('id',s.id);
+        if(error){li.className='mal';li.textContent=f.nombre+': no se pudo guardar.';continue;}
+      }else{
+        const {data,error}=await sb.from('sedes').insert({nombre:f.nombre,direccion:f.direccion,localidad:f.localidad}).select();
+        if(error||!data||!data.length){li.className='mal';li.textContent=f.nombre+': no se pudo crear.';continue;}
+        s=data[0];sedesLista.push(s);
+      }
+      const r=f.coords?{lat:f.coords.lat,lng:f.coords.lng,texto:'Coordenadas indicadas',precision:'exacta'}:await geocodificar(f.direccion,f.localidad);
+      if(r&&r.lat!=null){
+        await sb.from('sedes').update({activa:true,lat:r.lat,lng:r.lng,ubicacion_texto:r.texto,ubicacion_aprox:r.precision!=='exacta'}).eq('id',s.id);
+        if(r.precision==='exacta'){li.className='ok';li.textContent=f.nombre+': lista para fichar. Ubicada en '+r.texto+'.';}
+        else{li.className='aprox';li.textContent=f.nombre+': activa, pero con ubicación aproximada (solo se encontró la calle). Verificala en el mapa de la lista de abajo.';}
+      }else{
+        li.className='mal';
+        li.textContent=f.nombre+(r&&r.error==='red'?': no hay conexión para buscar la dirección. La sede quedó inactiva; activala más abajo cuando vuelva.':': se guardó pero no pudimos ubicar la dirección. Pegá las coordenadas o un enlace de Google Maps (clic derecho sobre el lugar > copiar coordenadas) y probá de nuevo.');
+      }
+    }
+    $('impTexto').value='';
+  }finally{
+    $('btnImportar').disabled=false;
+    cargarSedes();
+  }
+}
+$('btnImportar').onclick=importarSedes;
+
+const MSG_NO_ENCONTRADA='No encontramos esa dirección automáticamente. Abrí “Ajustes avanzados”, escribí la localidad y tocá “Buscar de nuevo”.';
+$('listaSedes').addEventListener('change',async e=>{
+  const chk=e.target.closest('.s-activa'); if(!chk)return;
+  const box=chk.closest('.sede'), st=box.querySelector('.s-status');
+  const s=sedesLista.find(x=>String(x.id)===box.dataset.id);
+  if(chk.checked&&(s.lat==null||s.lng==null)){
+    chk.disabled=true; msg(st,'Buscando la ubicación…');
+    const loc=box.querySelector('.s-loc').value;
+    const r=await geocodificar(s.direccion,loc);
+    chk.disabled=false;
+    if(!r||r.lat==null){
+      chk.checked=false;
+      msg(st,r&&r.error==='red'?'No hay conexión para buscar la dirección. Probá de nuevo.':MSG_NO_ENCONTRADA,'bad');
+      return;
+    }
+    const {error}=await sb.from('sedes').update({activa:true,lat:r.lat,lng:r.lng,ubicacion_texto:r.texto,ubicacion_aprox:r.precision!=='exacta',localidad:loc}).eq('id',s.id);
+    if(error){chk.checked=false;msg(st,'No se pudo guardar.','bad');return;}
+  }else{
+    const {error}=await sb.from('sedes').update({activa:chk.checked}).eq('id',s.id);
+    if(error){chk.checked=!chk.checked;msg(st,'No se pudo guardar.','bad');return;}
+  }
+  cargarSedes();
+});
+
+$('listaSedes').addEventListener('click',async e=>{
+  const btn=e.target.closest('[data-act]');
+  if(!btn)return;
+  const box=btn.closest('.sede'), st=box.querySelector('.s-status'), id=box.dataset.id;
+  if(btn.dataset.act==='buscar'){
+    const s=sedesLista.find(x=>String(x.id)===id), loc=box.querySelector('.s-loc').value;
+    msg(st,'Buscando la ubicación…');
+    const r=await geocodificar(s.direccion,loc);
+    if(!r||r.lat==null){msg(st,r&&r.error==='red'?'No hay conexión para buscar la dirección. Probá de nuevo.':MSG_NO_ENCONTRADA,'bad');return;}
+    const {error}=await sb.from('sedes').update({lat:r.lat,lng:r.lng,ubicacion_texto:r.texto,ubicacion_aprox:r.precision!=='exacta',localidad:loc}).eq('id',id);
+    if(error){msg(st,'No se pudo guardar.','bad');return;}
+    cargarSedes();return;
+  }
+  if(btn.dataset.act==='borrar'){
+    const s=sedesLista.find(x=>String(x.id)===id);
+    const {data:pas}=await sb.from('pasantes').select('id,nombre,sedes_ids');
+    const afectados=(pas||[]).filter(p=>(p.sedes_ids||[]).includes(Number(id)));
+    if(!confirm('¿Eliminar la sede "'+s.nombre+'"?'+(afectados.length?'\n\nSe le va a quitar a '+afectados.length+' pasante'+(afectados.length===1?'':'s')+' que la tenían asignada.':'')))return;
+    for(const p of afectados)await sb.from('pasantes').update({sedes_ids:p.sedes_ids.filter(x=>x!==Number(id))}).eq('id',p.id);
+    const {error}=await sb.from('sedes').delete().eq('id',id);
+    if(error){msg(st,'No se pudo eliminar.','bad');return;}
+    cargarSedes();return;
+  }
+  const lat=parseFloat(box.querySelector('.s-lat').value.replace(',','.'));
+  const lng=parseFloat(box.querySelector('.s-lng').value.replace(',','.'));
+  const radio=parseInt(box.querySelector('.s-radio').value,10);
+  if(!isFinite(lat)||!isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180){msg(st,'Latitud o longitud inválidas.','bad');return;}
+  if(!(radio>=30)){msg(st,'El radio mínimo es 30 metros.','bad');return;}
+  const {data,error}=await sb.from('sedes').update({lat,lng,radio_m:radio,ubicacion_texto:'Ubicación cargada a mano',ubicacion_aprox:false}).eq('id',id).select();
+  if(error||!data||!data.length){msg(st,'No se pudo guardar.','bad');return;}
+  cargarSedes();
+});
 
 /* ---------- Arranque ---------- */
-
+if(window.FICHAJE_LOCAL)$('modoLocal').hidden=false;
 (async()=>{
-  if(!sb)return;
-  await cargarDatalist();
-  const {data:{session}}=await sb.auth.getSession();
-  if(session)mostrarPanel();
-  sb.auth.onAuthStateChange((_event,session)=>{
-    if(!session){
-      $('panelContent').style.display='none';
-      $('panelLogin').style.display='block';
-    }
-  });
-  // refresca el listado público de nombres si RRHH agrega/edita pasantes
-  sb.channel('pasantes-publico')
-    .on('postgres_changes',{event:'*',schema:'public',table:'pasantes'},()=>{cargarDatalist(); if($('panelContent').style.display==='block'){cargarPasantesAdmin();}})
-    .subscribe();
+  const t0=Date.now();
+  let sesionRRHH=false;
+  if(sb){
+    try{
+      const {data:{session}}=await sb.auth.getSession();
+      if(session){
+        const {data:esRRHH}=await sb.rpc('soy_rrhh');
+        if(esRRHH){rol='rrhh';sesionRRHH=true;}
+        else await sb.auth.signOut();
+      }
+    }catch(e){console.error(e);}
+    sb.auth.onAuthStateChange((ev)=>{ if(ev==='SIGNED_OUT'&&rol==='rrhh'){rol=null;mostrarLogin();} });
+  }
+  // el splash se queda al menos ~2,2 s para que se luzca
+  await new Promise(r=>setTimeout(r,Math.max(0,2200-(Date.now()-t0))));
+  $('splash').classList.add('out');
+  setTimeout(()=>{$('splash').style.display='none';},700);
+  if(sesionRRHH)entrarApp(); else mostrarLogin();
 })();
-
-/* Reloj en vivo */
-function tickReloj(){
-  const d=new Date();
-  $('relojHora').textContent=d.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
-  $('relojFecha').textContent=d.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
-}
-tickReloj(); setInterval(tickReloj,10000);
-
-/* Botón "Instalar app" */
-let promptInstalar=null;
-const esStandalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone;
-window.addEventListener('beforeinstallprompt',e=>{
-  e.preventDefault(); promptInstalar=e;
-  if(!esStandalone)$('btnInstalar').style.display='inline-block';
-});
-$('btnInstalar').onclick=async()=>{
-  if(!promptInstalar)return;
-  promptInstalar.prompt();
-  await promptInstalar.userChoice;
-  promptInstalar=null; $('btnInstalar').style.display='none';
-};
-window.addEventListener('appinstalled',()=>{$('btnInstalar').style.display='none';});
-if(/iphone|ipad|ipod/i.test(navigator.userAgent)&&!esStandalone)$('iosHint').style.display='block';
 
 /* Registra el service worker para que la app sea instalable (PWA) */
 if('serviceWorker' in navigator){
@@ -420,6 +1146,7 @@ if('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js').catch(()=>{});
   });
 }
+
 </script>
 </body>
 </html>
