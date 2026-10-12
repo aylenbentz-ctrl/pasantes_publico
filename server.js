@@ -26,7 +26,10 @@ const DATA_FILE = path.join(__dirname, 'data.json');
 let db;
 function cargar() {
   try { db = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')); }
-  catch { db = { pasantes: [], fichajes: [], sedes: [], seq: { fichajes: 0, sedes: 0 } }; }
+  catch { db = { pasantes: [], fichajes: [], sedes: [], certificados: [], seq: { fichajes: 0, sedes: 0, certificados: 0 } }; }
+  if (!db.certificados) db.certificados = [];
+  if (!db.seq) db.seq = { fichajes: 0, sedes: 0 };
+  if (db.seq.certificados == null) db.seq.certificados = 0;
   if (!db.sedes.length) {
     // Sedes de Autos del Sur. La app las ubica sola en el primer inicio de sesión de RRHH.
     [
@@ -52,6 +55,7 @@ function guardar() {
 }
 const diaDe = (d = new Date()) => d.toLocaleDateString('en-CA', { timeZone: TZ });
 
+const PNG_DEMO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
 function sembrarDemo() {
   db.pasantes.push(
     { id: 'ana_perez', nombre: 'Ana Perez', pin: '1234', area: 'Ventas', horario: 'Lun a Vie 9 a 18', fecha_inicio: null, fecha_fin: null, sedes_ids: db.sedes.map(x => x.id), creado_en: new Date().toISOString() },
@@ -62,6 +66,12 @@ function sembrarDemo() {
     if (dow === 0 || dow === 6) continue;
     const dia = diaDe(f);
     [['Ana Perez', i % 5 === 0], ['Juan Gomez', i % 4 === 0]].forEach(([nombre, olvido]) => {
+      // para probar: Juan faltó sin avisar y Ana faltó con certificado
+      if (nombre === 'Juan Gomez' && i % 7 === 3) return;
+      if (nombre === 'Ana Perez' && i % 7 === 5) {
+        db.certificados.push({ id: ++db.seq.certificados, nombre, dia, archivo_nombre: 'certificado-medico.png', archivo_tipo: 'image/png', archivo: PNG_DEMO, nota: 'Certificado médico', subido_en: new Date().toISOString(), visto: false });
+        return;
+      }
       const base = new Date(dia + 'T09:00:00-03:00');
       db.fichajes.push({ id: ++db.seq.fichajes, nombre, tipo: 'entrada', dia, ts: base.toISOString(), ubicacion_lat: null, ubicacion_lng: null, sede: 'Autos del Sur Sarandí' });
       if (!olvido) db.fichajes.push({ id: ++db.seq.fichajes, nombre, tipo: 'salida', dia, ts: new Date(base.getTime() + 8 * 3600000).toISOString(), ubicacion_lat: null, ubicacion_lng: null, sede: 'Autos del Sur Sarandí' });
@@ -98,6 +108,9 @@ function haversine(lat1, lng1, lat2, lng2) {
   return 6371000 * 2 * Math.asin(Math.sqrt(a));
 }
 
+const TIPOS_CERT = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+const MAX_CERT_CHARS = 3000000;             // ~2,2 MB de archivo
+
 const rpc = {
   soy_rrhh: (_a, req) => esRRHH(req),
 
@@ -106,7 +119,7 @@ const rpc = {
     const p = buscarPasante(p_nombre);
     if (!p) { falla(ip); return { ok: false, error: 'pasante_no_encontrado' }; }
     if (!igual(p.pin, p_pin)) { falla(ip); return { ok: false, error: 'pin_incorrecto' }; }
-    return { ok: true, nombre: p.nombre, area: p.area, horario: p.horario, fecha_inicio: p.fecha_inicio, fecha_fin: p.fecha_fin,
+    return { ok: true, nombre: p.nombre, area: p.area, horario: p.horario, fecha_inicio: p.fecha_inicio, fecha_fin: p.fecha_fin, creado_en: p.creado_en || null,
              sedes: db.sedes.filter(x => (p.sedes_ids || []).includes(x.id)).map(x => x.nombre) };
   },
 
@@ -115,6 +128,34 @@ const rpc = {
     const p = buscarPasante(p_nombre);
     if (!p || !igual(p.pin, p_pin)) { falla(ip); return { ok: false, error: 'credenciales' }; }
     return { ok: true, fichajes: db.fichajes.filter(f => f.nombre === p.nombre).sort((a, b) => a.ts < b.ts ? -1 : 1).map(f => ({ dia: f.dia, tipo: f.tipo, ts: f.ts, sede: f.sede })) };
+  },
+
+  mis_certificados: ({ p_nombre, p_pin }, _req, ip) => {
+    if (bloqueado(ip)) return { ok: false, error: 'demasiados_intentos' };
+    const p = buscarPasante(p_nombre);
+    if (!p || !igual(p.pin, p_pin)) { falla(ip); return { ok: false, error: 'credenciales' }; }
+    return { ok: true, certificados: db.certificados.filter(c => c.nombre === p.nombre).map(c => ({ dia: c.dia, archivo_nombre: c.archivo_nombre, nota: c.nota, subido_en: c.subido_en, visto: !!c.visto })) };
+  },
+
+  subir_certificado: ({ p_nombre, p_pin, p_dia, p_archivo_nombre, p_archivo_tipo, p_datos, p_nota }, _req, ip) => {
+    if (bloqueado(ip)) return { ok: false, error: 'demasiados_intentos' };
+    const p = buscarPasante(p_nombre);
+    if (!p) { falla(ip); return { ok: false, error: 'pasante_no_encontrado' }; }
+    if (!igual(p.pin, p_pin)) { falla(ip); return { ok: false, error: 'pin_incorrecto' }; }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(p_dia)) || isNaN(new Date(p_dia + 'T12:00:00Z'))) return { ok: false, error: 'dia_invalido' };
+    if (p_dia > diaDe()) return { ok: false, error: 'dia_futuro' };
+    if (!TIPOS_CERT.includes(p_archivo_tipo)) return { ok: false, error: 'tipo_invalido' };
+    const datos = String(p_datos || '');
+    if (!datos.startsWith('data:' + p_archivo_tipo + ';base64,')) return { ok: false, error: 'archivo_invalido' };
+    if (datos.length > MAX_CERT_CHARS) return { ok: false, error: 'archivo_grande' };
+    if (db.fichajes.some(f => f.nombre === p.nombre && f.dia === p_dia && f.tipo === 'entrada')) return { ok: false, error: 'ya_ficho' };
+    const fila = { nombre: p.nombre, dia: p_dia, archivo_nombre: String(p_archivo_nombre || 'certificado').slice(0, 120), archivo_tipo: p_archivo_tipo, archivo: datos,
+                   nota: String(p_nota || '').slice(0, 300), subido_en: new Date().toISOString(), visto: false };
+    const i = db.certificados.findIndex(c => c.nombre === p.nombre && c.dia === p_dia);
+    if (i >= 0) db.certificados[i] = { ...db.certificados[i], ...fila };      // reemplaza el anterior
+    else db.certificados.push({ id: ++db.seq.certificados, ...fila });
+    guardar(); avisar('certificados');
+    return { ok: true };
   },
 
   marcar_fichaje: ({ p_nombre, p_pin, p_tipo, p_lat, p_lng }, _req, ip) => {
@@ -150,11 +191,11 @@ const rpc = {
 };
 
 /* ---------------- Consultas genéricas (solo RRHH) ---------------- */
-const TABLAS = { pasantes: 'pasantes', fichajes: 'fichajes', sedes: 'sedes' };
+const TABLAS = { pasantes: 'pasantes', fichajes: 'fichajes', sedes: 'sedes', certificados: 'certificados' };
 const CAMPOS_PASANTE = ['id', 'nombre', 'pin', 'area', 'horario', 'fecha_inicio', 'fecha_fin', 'sedes_ids'];
 const CAMPOS_SEDE = ['nombre', 'direccion', 'lat', 'lng', 'radio_m', 'activa', 'localidad', 'ubicacion_texto', 'ubicacion_aprox'];
 
-function consulta({ table, op, filters = [], order, limit, values, cols, returning }) {
+function consulta({ table, op, filters = [], order, limit, offset, values, cols, returning }) {
   if (!TABLAS[table]) throw new Error('tabla_invalida');
   const rows = db[table];
   const coincide = r => filters.every(([c, v]) => String(r[c]) === String(v));
@@ -168,6 +209,7 @@ function consulta({ table, op, filters = [], order, limit, values, cols, returni
 
   if (op === 'select') {
     let r = ordenar(rows.filter(coincide));
+    if (offset) r = r.slice(Number(offset));
     if (limit) r = r.slice(0, Number(limit));
     return r.map(salida);
   }
@@ -180,7 +222,7 @@ function consulta({ table, op, filters = [], order, limit, values, cols, returni
   }
   if (op === 'update') {
     if (!filters.length) throw new Error('update_sin_filtro');
-    const permitidos = table === 'sedes' ? CAMPOS_SEDE : table === 'pasantes' ? CAMPOS_PASANTE.filter(c => c !== 'id') : [];
+    const permitidos = table === 'sedes' ? CAMPOS_SEDE : table === 'pasantes' ? CAMPOS_PASANTE.filter(c => c !== 'id') : table === 'certificados' ? ['visto'] : [];
     const tocados = rows.filter(coincide);
     if (table === 'pasantes' && values && 'sedes_ids' in values) values.sedes_ids = (Array.isArray(values.sedes_ids) ? values.sedes_ids : []).map(Number).filter(Number.isFinite);
     tocados.forEach(r => permitidos.forEach(c => { if (c in (values || {})) r[c] = values[c]; }));
@@ -225,7 +267,7 @@ const ESTATICOS = {
 function leerCuerpo(req) {
   return new Promise((res, rej) => {
     let b = '';
-    req.on('data', c => { b += c; if (b.length > 100e3) { rej(new Error('cuerpo_grande')); req.destroy(); } });
+    req.on('data', c => { b += c; if (b.length > 4e6) { rej(new Error('cuerpo_grande')); req.destroy(); } });
     req.on('end', () => { try { res(b ? JSON.parse(b) : {}); } catch { rej(new Error('json_invalido')); } });
   });
 }

@@ -1,0 +1,5 @@
+# Datos del servidor de prueba local: tienen los PIN en texto plano, no se suben
+data.json
+data.json.tmp
+node_modules/
+.DS_Store

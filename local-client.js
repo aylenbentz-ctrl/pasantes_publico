@@ -22,6 +22,7 @@
     eq(c, v) { this.q.filters.push([c, v]); return this; }
     order(c) { this.q.order = c; return this; }
     limit(n) { this.q.limit = n; return this; }
+    range(a, b) { this.q.offset = a; this.q.limit = b - a + 1; return this; }
     delete() { this.q.op = 'delete'; return this; }
     update(v) { this.q.op = 'update'; this.q.values = v; return this; }
     upsert(v) { this.q.op = 'upsert'; this.q.values = v; return this; }
