@@ -185,3 +185,19 @@ que ser de acceso interno/restringido, GitHub Pages solo no alcanza.
 Nada de esto es motivo para no hacerlo — son los mismos riesgos que tiene
 cualquier app chica hecha con Supabase + hosting estático. Simplemente
 conviene tenerlos en la cabeza antes de que empiecen a fichar pasantes reales.
+
+---
+
+## Mantenimiento (para que la página dure)
+
+- **Que Supabase no se pause:** el plan gratuito pausa el proyecto tras 7 días sin uso. La tarea
+  `.github/workflows/mantener-activo.yml` consulta la base cada 3 días para evitarlo. Se prueba a mano en
+  la pestaña **Actions** > *Mantener Supabase activo* > *Run workflow* (tiene que quedar en verde).
+  GitHub desactiva las tareas programadas de un repo público tras 60 días sin actividad en el repo;
+  si pasa, en **Actions** aparece "Enable workflow" y se reactiva con un clic.
+- **Espacio (500 MB en el plan gratuito):** las fichadas ocupan muy poco; los certificados son lo que más pesa.
+  En RRHH > **Certificados** > *Limpiar certificados viejos* se descarga un ZIP con los de más de 12 meses
+  y, después de que lo revises, se borran. Conviene hacerlo una vez al año.
+  El uso real se ve en Supabase > Settings > Usage.
+- **Copias de seguridad:** el plan gratuito no las incluye. Una vez por mes, en RRHH > **Historial**,
+  *Descargar historial de todos (CSV)* y guardarlo en Drive. El plan Pro de Supabase agrega copias diarias.

@@ -366,6 +366,11 @@ details.avanzado{margin-top:6px;} details.avanzado summary{cursor:pointer; font-
       <table id="tablaCerts"><thead><tr><th>Pasante</th><th>Día que faltó</th><th>Archivo</th><th>Subido</th><th></th></tr></thead><tbody></tbody></table>
     </div>
     <div class="empty" id="emptyCerts" style="display:none;">Todavía no subieron certificados.</div>
+    <div class="panel" style="margin-top:24px;">
+      <h3 style="font-size:19px; margin-bottom:6px;">Limpiar certificados viejos</h3>
+      <p class="hint" style="margin-bottom:12px; max-width:70ch;">Borra los certificados de faltas de hace más de 12 meses para no llenar la base de datos ni guardar datos personales de más. Antes se descarga un ZIP con todos los archivos, y recién después de que lo revises se borran.</p>
+      <div class="row"><button class="btn btn-ghost btn-sm" id="btnLimpiarCerts" type="button">Descargar y borrar certificados viejos</button><span class="hint" id="limpiarEstado" role="status"></span></div>
+    </div>
   </section>
 
   <!-- ===== RRHH: Sedes ===== -->
@@ -940,6 +945,9 @@ function renderCerts(){
   const tbody=$('tablaCerts').querySelector('tbody');
   tbody.innerHTML='';
   $('emptyCerts').style.display=certsRRHH.length?'none':'block';
+  const nViejos=certsViejos().length;
+  $('btnLimpiarCerts').disabled=!nViejos;
+  if(!$('limpiarEstado').dataset.ocupado)msg($('limpiarEstado'),nViejos?nViejos+' certificado'+(nViejos===1?'':'s')+' con más de '+MESES_CERT+' meses.':'No hay certificados con más de '+MESES_CERT+' meses.');
   const orden=certsRRHH.slice().sort((a,b)=>(a.visto===b.visto)?0:(a.visto?1:-1));      // nuevos primero
   orden.forEach(c=>{
     const tr=document.createElement('tr');
@@ -995,6 +1003,77 @@ $('verBajar').onclick=()=>{
   const a=document.createElement('a');a.href=u;a.download=certAbierto.c.archivo_nombre||'certificado';a.click();
   setTimeout(()=>URL.revokeObjectURL(u),1000);
 };
+
+/* ---------- RRHH: limpiar certificados viejos (con ZIP de respaldo) ---------- */
+let MESES_CERT=12;
+function fechaCorte(){const [y,m,d]=hoyKey().split('-').map(Number);return new Date(Date.UTC(y,m-1-MESES_CERT,d)).toISOString().slice(0,10);}
+const certsViejos=()=>certsRRHH.filter(c=>c.dia<fechaCorte());
+
+/* ZIP sin compresión armado en el navegador (no hace falta ninguna librería). */
+const CRC_T=(()=>{const t=[];for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0;}return t;})();
+function crc32(u8){let c=0xFFFFFFFF;for(let i=0;i<u8.length;i++)c=CRC_T[(c^u8[i])&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0;}
+function armarZip(archivos){
+  const enc=new TextEncoder(), partes=[], central=[];
+  let offset=0, tamCentral=0;
+  archivos.forEach(a=>{
+    const nom=enc.encode(a.nombre), crc=crc32(a.datos), tam=a.datos.length;
+    const h=new DataView(new ArrayBuffer(30));
+    h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint16(6,0x0800,true);h.setUint16(12,0x21,true);
+    h.setUint32(14,crc,true);h.setUint32(18,tam,true);h.setUint32(22,tam,true);h.setUint16(26,nom.length,true);
+    partes.push(h.buffer,nom,a.datos);
+    const c=new DataView(new ArrayBuffer(46));
+    c.setUint32(0,0x02014b50,true);c.setUint16(4,20,true);c.setUint16(6,20,true);c.setUint16(8,0x0800,true);c.setUint16(14,0x21,true);
+    c.setUint32(16,crc,true);c.setUint32(20,tam,true);c.setUint32(24,tam,true);c.setUint16(28,nom.length,true);c.setUint32(42,offset,true);
+    central.push(c.buffer,nom);
+    tamCentral+=46+nom.length;
+    offset+=30+nom.length+tam;
+  });
+  const f=new DataView(new ArrayBuffer(22));
+  f.setUint32(0,0x06054b50,true);f.setUint16(8,archivos.length,true);f.setUint16(10,archivos.length,true);f.setUint32(12,tamCentral,true);f.setUint32(16,offset,true);
+  return new Blob([...partes,...central,f.buffer],{type:'application/zip'});
+}
+async function limpiarCerts(){
+  const viejos=certsViejos(), n=viejos.length, st=$('limpiarEstado'), btn=$('btnLimpiarCerts'), corte=fechaCorte();
+  if(!n)return;
+  if(!confirm('Hay '+n+' certificado'+(n===1?'':'s')+' de faltas anteriores al '+fechaCorta(corte)+' (más de '+MESES_CERT+' meses).\n\nPrimero se descarga un ZIP con todos los archivos. Después te pregunto si querés borrarlos.\n\n¿Seguir?'))return;
+  btn.disabled=true;st.dataset.ocupado='1';
+  try{
+    const archivos=[];
+    let csv=filaCSV(['Pasante','Dia que falto','Archivo','Nota','Subido']);
+    for(let i=0;i<n;i++){
+      const c=viejos[i];
+      msg(st,'Descargando '+(i+1)+' de '+n+'…');
+      const {data,error}=await sb.from('certificados').select('archivo').eq('id',c.id);
+      if(error||!data||!data.length||!data[0].archivo)throw new Error('lectura');
+      const bytes=new Uint8Array(await blobDeDataUrl(data[0].archivo).arrayBuffer());
+      const ext=c.archivo_tipo==='application/pdf'?'pdf':c.archivo_tipo==='image/png'?'png':c.archivo_tipo==='image/webp'?'webp':'jpg';
+      const nombre=slug(c.nombre)+'_'+c.dia+'.'+ext;
+      archivos.push({nombre,datos:bytes});
+      csv+=filaCSV([c.nombre,fechaCorta(c.dia),nombre,c.nota||'',fechaHoraCorta(c.subido_en)]);
+    }
+    archivos.push({nombre:'listado.csv',datos:new TextEncoder().encode('\ufeff'+csv)});
+    const zipNombre='certificados_anteriores_a_'+corte+'.zip';
+    descargarBlob(armarZip(archivos),zipNombre);
+    if(!confirm('Se descargó '+zipNombre+' con '+n+' certificado'+(n===1?'':'s')+'.\n\nAbrilo y comprobá que se vean bien. ¿Borrar ahora estos certificados de la base?\n\nNo se puede deshacer.')){
+      msg(st,'No se borró nada. El ZIP quedó descargado.');return;
+    }
+    let fallas=0;
+    for(let i=0;i<n;i++){
+      msg(st,'Borrando '+(i+1)+' de '+n+'…');
+      const {error}=await sb.from('certificados').delete().eq('id',viejos[i].id);
+      if(error)fallas++;
+    }
+    delete st.dataset.ocupado;
+    await cargarCerts();
+    msg(st,fallas?('Se borraron '+(n-fallas)+' de '+n+'. '+fallas+' no se pudieron borrar, probá de nuevo.'):('Listo: se borraron '+n+' certificado'+(n===1?'':'s')+' viejo'+(n===1?'':'s')+'.'),fallas?'bad':'ok');
+  }catch(e){
+    msg(st,'No se pudo completar la descarga, así que no se borró nada. Probá de nuevo.','bad');
+  }finally{
+    delete st.dataset.ocupado;
+    btn.disabled=!certsViejos().length;
+  }
+}
+$('btnLimpiarCerts').onclick=limpiarCerts;
 
 /* ---------- RRHH: historial por persona + exportar ---------- */
 let histSel=null, histRows=[], histDias={}, calHist=mesActual();
@@ -1102,11 +1181,13 @@ function filasPasante(p,dias,certs,desde,hasta){
   csv+=filaCSV([p.nombre,p.area||'','TOTAL',fich+' fichados, '+faltas+' faltas, '+ncert+' con certificado','','',tot.toFixed(2).replace('.',','),'','','']);
   return csv;
 }
-function descargarCSV(csv,nombre){
-  const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});   // BOM para que Excel respete tildes
+function descargarBlob(blob,nombre){
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;a.download=nombre;a.click();
   setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function descargarCSV(csv,nombre){
+  descargarBlob(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}),nombre);   // BOM para que Excel respete tildes
 }
 const slug=t=>String(t).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
 
