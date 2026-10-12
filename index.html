@@ -16,6 +16,7 @@
   --noche:#00123a; --medianoche:#000a5d; --ford:#2457d6; --ford-deep:#173fa8;
   --bg:#eceff6; --surface:#ffffff; --ink:#0c1226; --muted:#566079; --line:#d3d9e6;
   --ok:#17855a; --warn:#e2a100; --bad:#c23b2e;
+  --cert:#2457d6; --tint-cert:rgba(36,87,214,.12);
   --tint-ok:rgba(23,133,90,.12); --tint-bad:rgba(194,59,46,.10); --tint-warn:rgba(226,161,0,.16);
   --f-body:"Barlow","Segoe UI",system-ui,-apple-system,sans-serif;
   --f-head:"Barlow Semi Condensed","Barlow","Arial Narrow",sans-serif;
@@ -27,7 +28,7 @@
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#090e1d; --surface:#111a31; --ink:#e9edf7; --muted:#9aa5bf; --line:#26304a; --ford:#5b8cf0;
+    --bg:#090e1d; --surface:#111a31; --ink:#e9edf7; --muted:#9aa5bf; --line:#26304a; --ford:#5b8cf0; --cert:#3668e0; --tint-cert:rgba(91,140,240,.18);
   }
 }
 *{box-sizing:border-box;}
@@ -77,6 +78,7 @@ textarea:focus{outline:none; border-color:var(--ford); box-shadow:0 0 0 3px rgba
 .imp-res .ok{color:var(--ok);} .imp-res .mal{color:var(--bad);} .imp-res .aprox{color:#8a6200;}
 input,select{width:100%; min-height:48px; padding:0 13px; border-radius:9px; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); font:400 16px var(--f-body); margin-bottom:16px;}
 input:focus,select:focus{outline:none; border-color:var(--ford); box-shadow:0 0 0 3px rgba(36,87,214,.25);}
+input[type=file]{padding:10px 13px; height:auto;}
 input[type=checkbox]{width:20px; min-height:20px; margin:0 8px 0 0; accent-color:var(--ford-deep);}
 .hint{font-size:14px; color:var(--muted); min-height:20px;}
 .row{display:flex; gap:12px; flex-wrap:wrap; align-items:center;}
@@ -140,7 +142,16 @@ main.wide .contenedor{max-width:1040px; padding-top:26px;}
 .cal-day.today{box-shadow:inset 0 0 0 2px var(--ink);}
 .cal-day.full{background:var(--ok); color:#fff; font-weight:600;}
 .cal-day.part{background:var(--warn); color:#1c1400; font-weight:600;}
+.cal-day.falta{background:var(--bad); color:#fff; font-weight:600;}
+.cal-day.cert{background:var(--cert); color:#fff; font-weight:600;}
+button.cal-day{border:0; padding:0; cursor:pointer; position:relative;}
+div.cal-day{position:relative;}
+button.cal-day:hover{filter:brightness(1.12);}
+button.cal-day:active{transform:translateY(1px);}
+.cal-day.nuevo::after{content:""; position:absolute; top:-3px; right:-3px; width:13px; height:13px; border-radius:50%; background:var(--warn); border:2px solid var(--surface);}
+.cal-ayuda{font-size:14px; color:var(--muted); margin-top:10px;}
 .legend{display:flex; gap:8px 18px; flex-wrap:wrap; margin-top:14px; font-size:14px; color:var(--muted);}
+.legend .i-nuevo{border:2px solid var(--surface); box-shadow:0 0 0 1px var(--line);}
 .legend i{display:inline-block; width:12px; height:12px; border-radius:50%; margin-right:6px; vertical-align:-1px;}
 
 /* ---------- Tablas ---------- */
@@ -154,10 +165,15 @@ td.num, .num{font-variant-numeric:tabular-nums;}
 .tag-out{background:var(--tint-bad); color:var(--bad);}
 .badge{font-size:13px; font-weight:600; padding:2px 10px; border-radius:20px; background:var(--tint-warn); color:#8a6200;}
 .badge.ok{background:var(--tint-ok); color:var(--ok);}
+.badge.bad{background:var(--tint-bad); color:var(--bad);}
+.badge.cert{background:var(--tint-cert); color:var(--ford-deep);}
+.badge.nuevo{background:var(--warn); color:#1c1400;}
+.contador{display:inline-block; min-width:20px; padding:1px 6px; margin-left:7px; border-radius:20px; background:var(--warn); color:#1c1400; font:700 12px/18px var(--f-body); text-align:center;}
+.alerta.alerta-cert{border-left-color:var(--cert); background:var(--tint-cert);}
 .empty{color:var(--muted); text-align:center; padding:26px 0;}
 .alerta{border-left:5px solid var(--bad); background:var(--tint-bad); border-radius:0 10px 10px 0; padding:14px 16px; margin-bottom:24px;}
 .alerta b{display:block; margin-bottom:2px;}
-@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .badge{color:#f0c14d;} }
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .badge{color:#f0c14d;} :root:not([data-theme="light"]) .badge.ok{color:#4fd09a;} :root:not([data-theme="light"]) .badge.bad{color:#ff8f82;} :root:not([data-theme="light"]) .badge.cert{color:#8fb2ff;} :root:not([data-theme="light"]) .badge.nuevo{color:#1c1400;} }
 
 .hist-grid{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.1fr); gap:32px; align-items:start;}
 @media (max-width:820px){.hist-grid{grid-template-columns:1fr; gap:0;}}
@@ -174,6 +190,10 @@ dialog{border:0; border-radius:14px; padding:24px; width:min(92vw,440px); backgr
 dialog::backdrop{background:rgba(0,10,40,.55);}
 dialog h2{margin-bottom:14px;}
 dialog .checks{flex-direction:column; margin-bottom:14px;}
+.cert-prev{margin:4px 0 6px; text-align:center;}
+.cert-prev img{max-width:100%; max-height:60vh; border-radius:8px; border:1px solid var(--line);}
+.cert-prev .pdf{padding:26px 10px; border:1.5px dashed var(--line); border-radius:10px; color:var(--muted);}
+.btn-aux{margin-top:12px;}
 .switch{display:flex; align-items:center; font-weight:600; margin:0; cursor:pointer;}
 .switch input{width:46px; height:26px; min-height:26px; margin:0 8px 0 0; appearance:none; border-radius:13px; background:var(--line); position:relative; cursor:pointer; transition:background .15s; border:0;}
 .switch input::after{content:""; position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%; background:#fff; transition:transform .15s;}
@@ -226,6 +246,7 @@ details.avanzado{margin-top:6px;} details.avanzado summary{cursor:pointer; font-
   <button data-sec="hoy" class="active">Hoy</button>
   <button data-sec="pasantes">Pasantes</button>
   <button data-sec="historial">Historial</button>
+  <button data-sec="certificados">Certificados<span class="contador" id="contCert" hidden></span></button>
   <button data-sec="sedes">Sedes</button>
 </nav>
 
@@ -265,6 +286,11 @@ details.avanzado{margin-top:6px;} details.avanzado summary{cursor:pointer; font-
     <div class="alerta" id="alertaSedes" style="display:none; border-left-color:var(--warn); background:var(--tint-warn);">
       <b>Revisá la ubicación de las sedes</b>
       <div id="listaAlertaSedes"></div>
+    </div>
+    <div class="alerta alerta-cert" id="alertaCert" style="display:none;" role="status">
+      <b id="tituloAlertaCert">Certificados nuevos</b>
+      <div id="listaAlertaCert"></div>
+      <button class="btn btn-main btn-sm btn-aux" id="btnVerCerts" type="button">Ver certificados</button>
     </div>
     <div class="alerta" id="alertaCard" style="display:none;">
       <b>Falta la salida</b>
@@ -313,8 +339,12 @@ details.avanzado{margin-top:6px;} details.avanzado summary{cursor:pointer; font-
       </div>
       <div class="row-between">
         <div class="hint" id="histResumen" style="margin:0;"></div>
-        <button class="btn btn-main btn-sm" id="btnExportar">Exportar historial (CSV)</button>
+        <div class="row">
+          <button class="btn btn-ghost btn-sm" id="btnExportar">Descargar este pasante (CSV)</button>
+          <button class="btn btn-main btn-sm" id="btnExportarTodos">Descargar historial de todos (CSV)</button>
+        </div>
       </div>
+      <div class="hint" id="exportEstado" style="margin-top:8px;" role="status">Las descargas usan las fechas Desde y Hasta. Si las dejás vacías, bajan todo el historial.</div>
     </div>
     <div class="hist-grid">
       <div class="bloque" style="border-top:0; padding-top:6px;"><h2>Calendario</h2><div id="calRRHH"></div></div>
@@ -325,6 +355,21 @@ details.avanzado{margin-top:6px;} details.avanzado summary{cursor:pointer; font-
         </div>
         <div class="empty" id="emptyHist" style="display:none;">No hay fichadas en estas fechas.</div>
       </div>
+    </div>
+  </section>
+
+  <!-- ===== RRHH: Certificados ===== -->
+  <section id="secCertificados" hidden>
+    <h2 style="margin-bottom:6px;">Certificados</h2>
+    <p class="hint" style="margin-bottom:16px; max-width:62ch;">Los pasantes los suben desde su calendario, en el día que faltaron. Los nuevos aparecen primero y dejan de figurar como nuevos cuando los abrís.</p>
+    <div class="wrap">
+      <table id="tablaCerts"><thead><tr><th>Pasante</th><th>Día que faltó</th><th>Archivo</th><th>Subido</th><th></th></tr></thead><tbody></tbody></table>
+    </div>
+    <div class="empty" id="emptyCerts" style="display:none;">Todavía no subieron certificados.</div>
+    <div class="panel" style="margin-top:24px;">
+      <h3 style="font-size:19px; margin-bottom:6px;">Limpiar certificados viejos</h3>
+      <p class="hint" style="margin-bottom:12px; max-width:70ch;">Borra los certificados de faltas de hace más de 12 meses para no llenar la base de datos ni guardar datos personales de más. Antes se descarga un ZIP con todos los archivos, y recién después de que lo revises se borran.</p>
+      <div class="row"><button class="btn btn-ghost btn-sm" id="btnLimpiarCerts" type="button">Descargar y borrar certificados viejos</button><span class="hint" id="limpiarEstado" role="status"></span></div>
     </div>
   </section>
 
@@ -346,6 +391,32 @@ details.avanzado{margin-top:6px;} details.avanzado summary{cursor:pointer; font-
   </div>
 </main>
 </div>
+
+<dialog id="dlgCert">
+  <form method="dialog">
+    <h2 id="certTitulo">Certificado</h2>
+    <p class="hint" id="certInfo" style="margin-bottom:14px;"></p>
+    <label for="certArchivo">Foto o PDF del certificado</label>
+    <input id="certArchivo" type="file" accept="image/*,application/pdf">
+    <label for="certNota">Nota (opcional)</label>
+    <textarea id="certNota" rows="2" maxlength="300" placeholder="Por ejemplo: certificado médico"></textarea>
+    <div class="hint" id="certStatus" role="status"></div>
+    <div class="row" style="margin-top:8px;"><button class="btn btn-ghost btn-sm" value="cancel">Cancelar</button><button class="btn btn-main btn-sm" id="certSubir" value="ok">Subir certificado</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlgCertVer" style="width:min(94vw,560px);">
+  <form method="dialog">
+    <h2 id="verTitulo">Certificado</h2>
+    <p class="hint" id="verInfo" style="margin-bottom:10px;"></p>
+    <div id="verCuerpo" class="cert-prev"></div>
+    <div class="row" style="margin-top:14px;">
+      <button class="btn btn-ghost btn-sm" value="cancel">Cerrar</button>
+      <button class="btn btn-main btn-sm" id="verAbrir" type="button" disabled>Abrir en otra pestaña</button>
+      <button class="btn btn-ghost btn-sm" id="verBajar" type="button" disabled>Descargar</button>
+    </div>
+  </form>
+</dialog>
 
 <dialog id="dlgSedes">
   <form method="dialog">
@@ -431,9 +502,10 @@ function entrarApp(){
   $('navRRHH').hidden=!esRRHH;
   $('main').classList.toggle('wide',esRRHH);
   $('contRRHH').hidden=!esRRHH;
-  ['secPasante','secHoy','secPasantes','secHistorial','secSedes'].forEach(id=>$(id).hidden=true);
+  ['secPasante','secHoy','secPasantes','secHistorial','secCertificados','secSedes'].forEach(id=>$(id).hidden=true);
   if(esRRHH){
     $('whoami').textContent='Recursos Humanos';
+    cargarCerts();
     irSeccion('hoy');
     autoGeocodificarSedes();
   }else{
@@ -469,7 +541,7 @@ $('formLogin').addEventListener('submit',async e=>{
       if(!data||!data.ok){
         msg(st,data&&data.error==='pasante_no_encontrado'?'No encontramos ese nombre en la lista de pasantes autorizados.':'Nombre o clave incorrectos.','bad');return;
       }
-      pasanteSes={nombre:data.nombre,pin:pass,area:data.area,horario:data.horario,sedes:data.sedes||[]};
+      pasanteSes={nombre:data.nombre,pin:pass,area:data.area,horario:data.horario,sedes:data.sedes||[],fecha_inicio:data.fecha_inicio||null,fecha_fin:data.fecha_fin||null,creado_en:data.creado_en||null};
       rol='pasante';
     }
     msg(st,'');
@@ -489,12 +561,13 @@ $('btnSalir').onclick=async()=>{
 
 /* ---------- Navegación RRHH ---------- */
 function irSeccion(sec){
-  const map={hoy:'secHoy',pasantes:'secPasantes',historial:'secHistorial',sedes:'secSedes'};
+  const map={hoy:'secHoy',pasantes:'secPasantes',historial:'secHistorial',certificados:'secCertificados',sedes:'secSedes'};
   Object.entries(map).forEach(([k,id])=>$(id).hidden=(k!==sec));
   document.querySelectorAll('#navRRHH button').forEach(b=>b.classList.toggle('active',b.dataset.sec===sec));
   if(sec==='hoy')cargarHoy();
   if(sec==='pasantes')cargarSedesLista().then(()=>{renderChecksSedes();cargarPasantesAdmin();});
   if(sec==='historial')iniciarHistorial();
+  if(sec==='certificados')cargarCerts();
   if(sec==='sedes')cargarSedes();
   if(!realtimeOn)suscribirRealtime();
 }
@@ -512,7 +585,28 @@ function agruparDias(rows){
   return m;
 }
 
-function renderCalendario(el,dias,cal){
+/* Estado de cada día (compartido por pasante, RRHH y exportaciones):
+   full = entrada y salida · part = falta la salida · cert = faltó pero subió certificado ·
+   falta = día hábil pasado sin fichar ni certificado · null = nada para mostrar (fin de semana, futuro, fuera de la pasantía). */
+function sumarDia(k){const [y,m,d]=k.split('-').map(Number);return new Date(Date.UTC(y,m-1,d+1)).toISOString().slice(0,10);}
+function inicioDe(p,dias){
+  const primero=Object.keys(dias).filter(k=>dias[k].entrada).sort()[0]||null;
+  let base=(p&&p.fecha_inicio)||(p&&p.creado_en?new Date(p.creado_en).toLocaleDateString('en-CA',{timeZone:TZ}):null);
+  if(primero&&(!base||primero<base))base=primero;
+  return base;
+}
+function estadoDia(key,dias,ctx,hoy){
+  const info=dias[key];
+  if(info&&info.entrada)return info.salida?'full':'part';
+  if(ctx.certs&&ctx.certs[key])return 'cert';
+  if(key>=hoy||!ctx.inicio||key<ctx.inicio||(ctx.fin&&key>ctx.fin))return null;
+  const [y,m,d]=key.split('-').map(Number);
+  const dow=new Date(Date.UTC(y,m-1,d)).getUTCDay();
+  return (dow===0||dow===6)?null:'falta';
+}
+
+function renderCalendario(el,dias,cal,ctx){
+  ctx=ctx||{};
   const {y,m}=cal;
   let titulo=new Date(y,m,1).toLocaleDateString('es-AR',{month:'long',year:'numeric'}).replace(' de ',' ');
   titulo=titulo.charAt(0).toUpperCase()+titulo.slice(1);
@@ -522,32 +616,43 @@ function renderCalendario(el,dias,cal){
   let html='<div class="cal-head"><button type="button" data-nav="-1" aria-label="Mes anterior">‹</button><b>'+esc(titulo)+'</b><button type="button" data-nav="1" aria-label="Mes siguiente">›</button></div><div class="cal-grid">';
   ['L','M','M','J','V','S','D'].forEach(d=>html+='<div class="cal-dow">'+d+'</div>');
   for(let i=0;i<offset;i++)html+='<div class="cal-day blank"></div>';
-  let fichados=0;
+  let fichados=0, faltas=0, certs=0;
   for(let d=1;d<=total;d++){
     const key=y+'-'+pad(m+1)+'-'+pad(d);
     const info=dias[key];
+    const est=estadoDia(key,dias,ctx,hoy);
     const dow=(offset+d-1)%7;
     let cls='cal-day'+(dow>=5?' we':'')+(key===hoy?' today':'');
     let tip='';
-    if(info&&info.entrada){
-      fichados++;
-      if(info.salida){cls+=' full';tip='Entrada '+hora(info.entrada)+', salida '+hora(info.salida)+' ('+horasTxt(info.entrada,info.salida)+')';}
-      else{cls+=' part';tip='Entrada '+hora(info.entrada)+', sin salida';}
+    if(est==='full'){fichados++;cls+=' full';tip='Entrada '+hora(info.entrada)+', salida '+hora(info.salida)+' ('+horasTxt(info.entrada,info.salida)+')';}
+    else if(est==='part'){fichados++;cls+=' part';tip='Entrada '+hora(info.entrada)+', sin salida';}
+    else if(est==='cert'){
+      certs++;cls+=' cert';
+      const nuevo=ctx.marcarNuevos&&!ctx.certs[key].visto;
+      if(nuevo)cls+=' nuevo';
+      tip='Certificado subido'+(nuevo?' (nuevo, todavía no lo abriste)':'');
     }
-    html+='<div class="'+cls+'"'+(tip?' title="'+esc(tip)+'"':'')+'>'+d+'</div>';
+    else if(est==='falta'){faltas++;cls+=' falta';tip=ctx.click&&ctx.click.includes('falta')?'No fichaste este día. Tocá para subir un certificado.':'Sin fichar';}
+    const clic=est&&ctx.click&&ctx.click.includes(est)&&ctx.onDia;
+    if(clic)html+='<button type="button" class="'+cls+'" data-dia="'+key+'" data-est="'+est+'" title="'+esc(tip)+'" aria-label="'+d+': '+esc(tip)+'">'+d+'</button>';
+    else html+='<div class="'+cls+'"'+(tip?' title="'+esc(tip)+'"':'')+'>'+d+'</div>';
   }
-  html+='</div><div class="legend"><span><i style="background:var(--ok)"></i>Entrada y salida</span><span><i style="background:var(--warn)"></i>Falta la salida</span><span>'+fichados+' día'+(fichados===1?'':'s')+' este mes</span></div>';
+  html+='</div><div class="legend"><span><i style="background:var(--ok)"></i>Entrada y salida</span><span><i style="background:var(--warn)"></i>Falta la salida</span><span><i style="background:var(--bad)"></i>Sin fichar</span><span><i style="background:var(--cert)"></i>Certificado</span>'+(ctx.marcarNuevos?'<span><i class="i-nuevo" style="background:var(--warn)"></i>Certificado nuevo</span>':'')+'</div>'
+    +'<div class="legend" style="margin-top:6px;"><span>'+fichados+' fichado'+(fichados===1?'':'s')+', '+faltas+' sin fichar, '+certs+' con certificado este mes</span></div>'
+    +(ctx.ayuda?'<p class="cal-ayuda">'+esc(ctx.ayuda)+'</p>':'');
   el.innerHTML=html;
   el.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>{
     const n=new Date(y,m+Number(b.dataset.nav),1);
     cal.y=n.getFullYear();cal.m=n.getMonth();
-    renderCalendario(el,dias,cal);
+    renderCalendario(el,dias,cal,ctx);
   });
+  el.querySelectorAll('[data-dia]').forEach(b=>b.onclick=()=>ctx.onDia(b.dataset.dia,b.dataset.est));
 }
 const mesActual=()=>{const [y,m]=hoyKey().split('-');return {y:Number(y),m:Number(m)-1};};
 
 /* ---------- PASANTE: fichar + calendario propio ---------- */
-let calPas=mesActual(), diasPas={};
+let calPas=mesActual(), diasPas={}, certsPas={};
+const ctxPasante=()=>({certs:certsPas,inicio:inicioDe(pasanteSes,diasPas),fin:pasanteSes.fecha_fin||null,click:['falta','cert'],onDia:abrirDlgCert,ayuda:'Si faltaste, tocá el día en rojo para subir tu certificado.'});
 
 const FMT_HORA=new Intl.DateTimeFormat('es-AR',{timeZone:TZ,hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'});
 function tickReloj(){
@@ -573,15 +678,84 @@ function actualizarEstadoHoy(){
 }
 
 async function cargarMiCalendario(){
-  calPas=mesActual();diasPas={};
-  renderCalendario($('calPasante'),diasPas,calPas);
+  calPas=mesActual();diasPas={};certsPas={};
+  renderCalendario($('calPasante'),diasPas,calPas,ctxPasante());
   actualizarEstadoHoy();
-  const {data,error}=await sb.rpc('mis_fichajes',{p_nombre:pasanteSes.nombre,p_pin:pasanteSes.pin});
-  if(error||!data||!data.ok)return;
-  diasPas=agruparDias(data.fichajes||[]);
-  renderCalendario($('calPasante'),diasPas,calPas);
+  const [r1,r2]=await Promise.all([
+    sb.rpc('mis_fichajes',{p_nombre:pasanteSes.nombre,p_pin:pasanteSes.pin}),
+    sb.rpc('mis_certificados',{p_nombre:pasanteSes.nombre,p_pin:pasanteSes.pin})
+  ]);
+  if(r1.error||!r1.data||!r1.data.ok)return;
+  diasPas=agruparDias(r1.data.fichajes||[]);
+  certsPas={};
+  if(r2.data&&r2.data.ok)(r2.data.certificados||[]).forEach(c=>certsPas[c.dia]=c);
+  renderCalendario($('calPasante'),diasPas,calPas,ctxPasante());
   actualizarEstadoHoy();
 }
+
+/* ---------- PASANTE: subir certificado de un día que faltó ---------- */
+let certDia=null;
+function abrirDlgCert(key){
+  certDia=key;
+  const c=certsPas[key];
+  $('certTitulo').textContent='Certificado del '+fechaCorta(key);
+  $('certInfo').textContent=c
+    ?'Ya subiste “'+c.archivo_nombre+'”'+(c.visto?' y Recursos Humanos ya lo vio':'')+'. Si subís otro archivo, reemplaza al anterior.'
+    :'No fichaste este día. Subí una foto o un PDF del certificado para que Recursos Humanos lo vea.';
+  $('certArchivo').value='';
+  $('certNota').value=(c&&c.nota)||'';
+  $('certSubir').textContent=c?'Reemplazar certificado':'Subir certificado';
+  msg($('certStatus'),'');
+  $('dlgCert').showModal();
+}
+const LIM_PDF=2*1024*1024;
+function leerDataUrl(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(new Error('No pudimos leer el archivo.'));r.readAsDataURL(f);});}
+/* Las fotos se reducen (máx. 1600 px, JPG) para que suban rápido; los PDF van tal cual. */
+async function prepararArchivo(f){
+  if(f.type==='application/pdf'){
+    if(f.size>LIM_PDF)throw new Error('El PDF pesa más de 2 MB. Sacale una foto al certificado o comprimí el PDF.');
+    return {nombre:f.name,tipo:'application/pdf',datos:await leerDataUrl(f)};
+  }
+  if(!/^image\//.test(f.type))throw new Error('Solo se aceptan fotos o archivos PDF.');
+  const url=URL.createObjectURL(f);
+  try{
+    const img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=()=>rej(new Error('No pudimos abrir esa imagen. Probá con una foto JPG o PNG, o con un PDF.'));i.src=url;});
+    const k=Math.min(1,1600/Math.max(img.naturalWidth,img.naturalHeight));
+    const c=document.createElement('canvas');
+    c.width=Math.max(1,Math.round(img.naturalWidth*k));c.height=Math.max(1,Math.round(img.naturalHeight*k));
+    const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(img,0,0,c.width,c.height);
+    const datos=c.toDataURL('image/jpeg',0.82);
+    if(datos.length>2.8e6)throw new Error('La imagen es demasiado pesada. Probá con otra foto.');
+    return {nombre:f.name.replace(/\.[^.]+$/,'')+'.jpg',tipo:'image/jpeg',datos};
+  }finally{URL.revokeObjectURL(url);}
+}
+$('certSubir').onclick=async e=>{
+  e.preventDefault();
+  const st=$('certStatus'), f=$('certArchivo').files[0];
+  if(!f){msg(st,'Elegí una foto o un PDF del certificado.','bad');return;}
+  $('certSubir').disabled=true;msg(st,'Subiendo…');
+  try{
+    const a=await prepararArchivo(f);
+    const {data,error}=await sb.rpc('subir_certificado',{p_nombre:pasanteSes.nombre,p_pin:pasanteSes.pin,p_dia:certDia,p_archivo_nombre:a.nombre,p_archivo_tipo:a.tipo,p_datos:a.datos,p_nota:$('certNota').value.trim()});
+    if(error){msg(st,'No se pudo subir. Revisá tu conexión y probá de nuevo.','bad');return;}
+    if(!data||!data.ok){
+      const er=data&&data.error;
+      msg(st,er==='ya_ficho'?'Ese día sí ficharon tu entrada, no hace falta certificado.'
+        :er==='dia_futuro'?'No se puede subir un certificado para un día que todavía no pasó.'
+        :er==='archivo_grande'?'El archivo es demasiado pesado (máximo 2 MB).'
+        :er==='pin_incorrecto'||er==='pasante_no_encontrado'?'Tu usuario ya no es válido. Volvé a iniciar sesión.'
+        :'No se pudo subir el certificado.','bad');
+      return;
+    }
+    $('dlgCert').close();
+    msg($('status'),'Certificado del '+fechaCorta(certDia)+' subido. Recursos Humanos lo va a ver.','ok');
+    await cargarMiCalendario();
+  }catch(err){
+    msg(st,err&&err.message?err.message:'No se pudo subir el certificado.','bad');
+  }finally{
+    $('certSubir').disabled=false;
+  }
+};
 
 function getPos(){
   return new Promise((res,rej)=>{
@@ -653,7 +827,7 @@ async function agregarPasante(){
 $('btnAgregar').onclick=agregarPasante;
 
 async function cargarPasantesAdmin(){
-  const {data,error}=await sb.from('pasantes').select('id,nombre,area,horario,fecha_inicio,fecha_fin,sedes_ids').order('nombre');
+  const {data,error}=await sb.from('pasantes').select('id,nombre,area,horario,fecha_inicio,fecha_fin,sedes_ids,creado_en').order('nombre');
   if(error)return;
   pasantesLista=data||[];
   const nombreSede={};sedesLista.forEach(x=>nombreSede[x.id]=x.nombre);
@@ -682,6 +856,7 @@ $('tablaPasantes').addEventListener('click',async e=>{
   if(error||!data||!data.length){msg($('statusPasante'),'No se pudo eliminar (¿sesión de RRHH activa?).','bad');return;}
   if(borrarHist){
     const {error:e2}=await sb.from('fichajes').delete().eq('nombre',nombre);
+    await sb.from('certificados').delete().eq('nombre',nombre);
     if(e2){msg($('statusPasante'),'Pasante eliminado, pero no se pudo borrar su historial.','bad');cargarPasantesAdmin();return;}
   }
   msg($('statusPasante'),nombre+' eliminado'+(borrarHist?' junto con su historial.':'. Su historial se conservó.'),'ok');
@@ -691,7 +866,7 @@ $('tablaPasantes').addEventListener('click',async e=>{
 /* ---------- RRHH: registros de hoy ---------- */
 async function cargarHoy(){
   if(!pasantesLista.length){
-    const {data}=await sb.from('pasantes').select('id,nombre,area,horario,fecha_inicio,fecha_fin').order('nombre');
+    const {data}=await sb.from('pasantes').select('id,nombre,area,horario,fecha_inicio,fecha_fin,creado_en').order('nombre');
     pasantesLista=data||[];
   }
   const {data,error}=await sb.from('fichajes').select('*').eq('dia',hoyKey()).order('ts');
@@ -736,17 +911,177 @@ function suscribirRealtime(){
       if(!$('secHoy').hidden)cargarHoy();
       if(!$('secHistorial').hidden)cargarHistorial();
     })
+    .on('postgres_changes',{event:'*',schema:'public',table:'certificados'},()=>{cargarCerts();})
     .on('postgres_changes',{event:'*',schema:'public',table:'pasantes'},()=>{
       if(!$('secPasantes').hidden)cargarPasantesAdmin();
     })
     .subscribe();
 }
 
+/* ---------- RRHH: certificados (avisos, lista y visor) ---------- */
+let certsRRHH=[];            // metadatos (sin el archivo), más nuevos primero
+async function cargarCerts(){
+  if(!sb)return;
+  const {data,error}=await sb.from('certificados').select('id,nombre,dia,archivo_nombre,archivo_tipo,nota,subido_en,visto').order('subido_en');
+  if(error)return;
+  certsRRHH=(data||[]).slice().reverse();
+  actualizarAvisoCerts();
+  if(!$('secCertificados').hidden)renderCerts();
+  if(!$('secHistorial').hidden)renderHistorial();
+}
+function actualizarAvisoCerts(){
+  const nuevos=certsRRHH.filter(c=>!c.visto);
+  const cont=$('contCert');
+  cont.hidden=!nuevos.length;cont.textContent=nuevos.length;
+  cont.setAttribute('aria-label',nuevos.length+' certificado'+(nuevos.length===1?'':'s')+' nuevo'+(nuevos.length===1?'':'s'));
+  $('alertaCert').style.display=nuevos.length?'block':'none';
+  $('tituloAlertaCert').textContent=nuevos.length===1?'Hay 1 certificado nuevo':'Hay '+nuevos.length+' certificados nuevos';
+  $('listaAlertaCert').textContent=nuevos.slice(0,6).map(c=>c.nombre+' (faltó el '+fechaCorta(c.dia)+')').join(', ')+(nuevos.length>6?' y '+(nuevos.length-6)+' más':'')+'.';
+}
+$('btnVerCerts').onclick=()=>irSeccion('certificados');
+
+function fechaHoraCorta(iso){return new Date(iso).toLocaleDateString('es-AR',{timeZone:TZ,day:'2-digit',month:'2-digit'})+' '+hora(iso);}
+function renderCerts(){
+  const tbody=$('tablaCerts').querySelector('tbody');
+  tbody.innerHTML='';
+  $('emptyCerts').style.display=certsRRHH.length?'none':'block';
+  const nViejos=certsViejos().length;
+  $('btnLimpiarCerts').disabled=!nViejos;
+  if(!$('limpiarEstado').dataset.ocupado)msg($('limpiarEstado'),nViejos?nViejos+' certificado'+(nViejos===1?'':'s')+' con más de '+MESES_CERT+' meses.':'No hay certificados con más de '+MESES_CERT+' meses.');
+  const orden=certsRRHH.slice().sort((a,b)=>(a.visto===b.visto)?0:(a.visto?1:-1));      // nuevos primero
+  orden.forEach(c=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td>'+esc(c.nombre)+(c.visto?'':' <span class="badge nuevo">Nuevo</span>')+'</td><td>'+fechaCorta(c.dia)+'</td><td>'+esc(c.archivo_nombre||'—')+(c.nota?'<div class="hint" style="min-height:0;">'+esc(c.nota)+'</div>':'')+'</td><td class="num">'+fechaHoraCorta(c.subido_en)+'</td><td><button class="btn-mini" data-ver="'+c.id+'">Ver</button></td>';
+    tbody.appendChild(tr);
+  });
+}
+$('tablaCerts').addEventListener('click',e=>{
+  const b=e.target.closest('[data-ver]');if(!b)return;
+  const c=certsRRHH.find(x=>String(x.id)===b.dataset.ver);if(c)verCert(c);
+});
+
+function blobDeDataUrl(u){
+  const [h,b]=String(u).split(',');
+  const mime=(h.match(/:(.*?);/)||[])[1]||'application/octet-stream';
+  const bin=atob(b), arr=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);
+  return new Blob([arr],{type:mime});
+}
+let certAbierto=null;
+async function verCert(c){
+  certAbierto=null;
+  $('verTitulo').textContent='Certificado de '+c.nombre;
+  $('verInfo').textContent='Faltó el '+fechaCorta(c.dia)+'. Subido el '+fechaHoraCorta(c.subido_en)+'.'+(c.nota?' Nota: '+c.nota:'');
+  $('verCuerpo').innerHTML='<p class="hint">Cargando…</p>';
+  $('verAbrir').disabled=$('verBajar').disabled=true;
+  if(!$('dlgCertVer').open)$('dlgCertVer').showModal();
+  const {data,error}=await sb.from('certificados').select('archivo').eq('id',c.id);
+  if(error||!data||!data.length||!data[0].archivo){$('verCuerpo').innerHTML='<p class="hint" style="color:var(--bad)">No se pudo abrir el archivo.</p>';return;}
+  const url=data[0].archivo;
+  certAbierto={c,url};
+  const cuerpo=$('verCuerpo');cuerpo.innerHTML='';
+  if(c.archivo_tipo==='application/pdf'){
+    cuerpo.innerHTML='<div class="pdf">PDF: '+esc(c.archivo_nombre||'certificado.pdf')+'</div>';
+  }else{
+    const img=new Image();img.alt='Certificado de '+c.nombre;img.src=url;cuerpo.appendChild(img);
+  }
+  $('verAbrir').disabled=$('verBajar').disabled=false;
+  if(!c.visto){                                           // abrirlo lo marca como visto
+    const {error:e2}=await sb.from('certificados').update({visto:true}).eq('id',c.id);
+    if(!e2){c.visto=true;actualizarAvisoCerts();if(!$('secCertificados').hidden)renderCerts();if(!$('secHistorial').hidden)renderHistorial();}
+  }
+}
+$('verAbrir').onclick=()=>{
+  if(!certAbierto)return;
+  const u=URL.createObjectURL(blobDeDataUrl(certAbierto.url));
+  window.open(u,'_blank','noopener');
+  setTimeout(()=>URL.revokeObjectURL(u),60000);
+};
+$('verBajar').onclick=()=>{
+  if(!certAbierto)return;
+  const u=URL.createObjectURL(blobDeDataUrl(certAbierto.url));
+  const a=document.createElement('a');a.href=u;a.download=certAbierto.c.archivo_nombre||'certificado';a.click();
+  setTimeout(()=>URL.revokeObjectURL(u),1000);
+};
+
+/* ---------- RRHH: limpiar certificados viejos (con ZIP de respaldo) ---------- */
+let MESES_CERT=12;
+function fechaCorte(){const [y,m,d]=hoyKey().split('-').map(Number);return new Date(Date.UTC(y,m-1-MESES_CERT,d)).toISOString().slice(0,10);}
+const certsViejos=()=>certsRRHH.filter(c=>c.dia<fechaCorte());
+
+/* ZIP sin compresión armado en el navegador (no hace falta ninguna librería). */
+const CRC_T=(()=>{const t=[];for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0;}return t;})();
+function crc32(u8){let c=0xFFFFFFFF;for(let i=0;i<u8.length;i++)c=CRC_T[(c^u8[i])&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0;}
+function armarZip(archivos){
+  const enc=new TextEncoder(), partes=[], central=[];
+  let offset=0, tamCentral=0;
+  archivos.forEach(a=>{
+    const nom=enc.encode(a.nombre), crc=crc32(a.datos), tam=a.datos.length;
+    const h=new DataView(new ArrayBuffer(30));
+    h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint16(6,0x0800,true);h.setUint16(12,0x21,true);
+    h.setUint32(14,crc,true);h.setUint32(18,tam,true);h.setUint32(22,tam,true);h.setUint16(26,nom.length,true);
+    partes.push(h.buffer,nom,a.datos);
+    const c=new DataView(new ArrayBuffer(46));
+    c.setUint32(0,0x02014b50,true);c.setUint16(4,20,true);c.setUint16(6,20,true);c.setUint16(8,0x0800,true);c.setUint16(14,0x21,true);
+    c.setUint32(16,crc,true);c.setUint32(20,tam,true);c.setUint32(24,tam,true);c.setUint16(28,nom.length,true);c.setUint32(42,offset,true);
+    central.push(c.buffer,nom);
+    tamCentral+=46+nom.length;
+    offset+=30+nom.length+tam;
+  });
+  const f=new DataView(new ArrayBuffer(22));
+  f.setUint32(0,0x06054b50,true);f.setUint16(8,archivos.length,true);f.setUint16(10,archivos.length,true);f.setUint32(12,tamCentral,true);f.setUint32(16,offset,true);
+  return new Blob([...partes,...central,f.buffer],{type:'application/zip'});
+}
+async function limpiarCerts(){
+  const viejos=certsViejos(), n=viejos.length, st=$('limpiarEstado'), btn=$('btnLimpiarCerts'), corte=fechaCorte();
+  if(!n)return;
+  if(!confirm('Hay '+n+' certificado'+(n===1?'':'s')+' de faltas anteriores al '+fechaCorta(corte)+' (más de '+MESES_CERT+' meses).\n\nPrimero se descarga un ZIP con todos los archivos. Después te pregunto si querés borrarlos.\n\n¿Seguir?'))return;
+  btn.disabled=true;st.dataset.ocupado='1';
+  try{
+    const archivos=[];
+    let csv=filaCSV(['Pasante','Dia que falto','Archivo','Nota','Subido']);
+    for(let i=0;i<n;i++){
+      const c=viejos[i];
+      msg(st,'Descargando '+(i+1)+' de '+n+'…');
+      const {data,error}=await sb.from('certificados').select('archivo').eq('id',c.id);
+      if(error||!data||!data.length||!data[0].archivo)throw new Error('lectura');
+      const bytes=new Uint8Array(await blobDeDataUrl(data[0].archivo).arrayBuffer());
+      const ext=c.archivo_tipo==='application/pdf'?'pdf':c.archivo_tipo==='image/png'?'png':c.archivo_tipo==='image/webp'?'webp':'jpg';
+      const nombre=slug(c.nombre)+'_'+c.dia+'.'+ext;
+      archivos.push({nombre,datos:bytes});
+      csv+=filaCSV([c.nombre,fechaCorta(c.dia),nombre,c.nota||'',fechaHoraCorta(c.subido_en)]);
+    }
+    archivos.push({nombre:'listado.csv',datos:new TextEncoder().encode('\ufeff'+csv)});
+    const zipNombre='certificados_anteriores_a_'+corte+'.zip';
+    descargarBlob(armarZip(archivos),zipNombre);
+    if(!confirm('Se descargó '+zipNombre+' con '+n+' certificado'+(n===1?'':'s')+'.\n\nAbrilo y comprobá que se vean bien. ¿Borrar ahora estos certificados de la base?\n\nNo se puede deshacer.')){
+      msg(st,'No se borró nada. El ZIP quedó descargado.');return;
+    }
+    let fallas=0;
+    for(let i=0;i<n;i++){
+      msg(st,'Borrando '+(i+1)+' de '+n+'…');
+      const {error}=await sb.from('certificados').delete().eq('id',viejos[i].id);
+      if(error)fallas++;
+    }
+    delete st.dataset.ocupado;
+    await cargarCerts();
+    msg(st,fallas?('Se borraron '+(n-fallas)+' de '+n+'. '+fallas+' no se pudieron borrar, probá de nuevo.'):('Listo: se borraron '+n+' certificado'+(n===1?'':'s')+' viejo'+(n===1?'':'s')+'.'),fallas?'bad':'ok');
+  }catch(e){
+    msg(st,'No se pudo completar la descarga, así que no se borró nada. Probá de nuevo.','bad');
+  }finally{
+    delete st.dataset.ocupado;
+    btn.disabled=!certsViejos().length;
+  }
+}
+$('btnLimpiarCerts').onclick=limpiarCerts;
+
 /* ---------- RRHH: historial por persona + exportar ---------- */
 let histSel=null, histRows=[], histDias={}, calHist=mesActual();
+const certsDe=nombre=>{const m={};certsRRHH.filter(c=>c.nombre===nombre).forEach(c=>m[c.dia]=c);return m;};
+const ESTADO_TXT={full:'Presente',part:'Sin salida',falta:'Falta',cert:'Falta con certificado'};
 
 async function iniciarHistorial(){
-  const {data}=await sb.from('pasantes').select('id,nombre,area,horario,fecha_inicio,fecha_fin').order('nombre');
+  const {data}=await sb.from('pasantes').select('id,nombre,area,horario,fecha_inicio,fecha_fin,creado_en').order('nombre');
   pasantesLista=data||[];
   const sel=$('histPasante');
   sel.innerHTML=pasantesLista.length?'':'<option value="">— no hay pasantes —</option>';
@@ -757,6 +1092,7 @@ async function iniciarHistorial(){
     const k=hoyKey();$('histDesde').value=k.slice(0,8)+'01';$('histHasta').value=k;
   }
   calHist=mesActual();
+  await cargarCerts();
   cargarHistorial();
 }
 
@@ -769,53 +1105,136 @@ async function cargarHistorial(){
   renderHistorial();
 }
 
-function diasFiltrados(){
-  const d=$('histDesde').value, h=$('histHasta').value;
-  return Object.values(histDias)
-    .filter(x=>x.entrada&&(!d||x.dia>=d)&&(!h||x.dia<=h))
-    .sort((a,b)=>a.dia<b.dia?-1:1);
+/* Todos los días a mostrar/exportar de una persona entre desde y hasta: fichados, faltas y certificados. */
+function listaDias(p,dias,certs,desde,hasta){
+  const hoy=hoyKey(), ctx={certs,inicio:inicioDe(p,dias),fin:(p&&p.fecha_fin)||null};
+  const keys=new Set(Object.keys(dias).filter(k=>dias[k].entrada));
+  Object.keys(certs).forEach(k=>keys.add(k));
+  if(ctx.inicio){
+    let k=desde&&desde>ctx.inicio?desde:ctx.inicio;
+    const fin=hasta&&hasta<hoy?hasta:hoy;
+    for(let n=0;k<=fin&&n<4000;n++,k=sumarDia(k))keys.add(k);
+  }
+  const out=[];
+  keys.forEach(k=>{
+    if((desde&&k<desde)||(hasta&&k>hasta))return;
+    const estado=estadoDia(k,dias,ctx,hoy);
+    if(estado)out.push({dia:k,estado,info:dias[k],cert:certs[k]});
+  });
+  return out.sort((a,b)=>a.dia<b.dia?-1:1);
 }
+const diasDeSel=()=>listaDias(pasantesLista.find(x=>x.nombre===histSel),histDias,certsDe(histSel),$('histDesde').value,$('histHasta').value);
 
 function renderHistorial(){
-  renderCalendario($('calRRHH'),histDias,calHist);
-  const lista=diasFiltrados();
+  const p=pasantesLista.find(x=>x.nombre===histSel)||null;
+  const certs=histSel?certsDe(histSel):{};
+  renderCalendario($('calRRHH'),histDias,calHist,{certs,inicio:inicioDe(p,histDias),fin:p&&p.fecha_fin||null,click:['cert'],marcarNuevos:true,onDia:(k)=>verCert(certs[k]),ayuda:certsRRHH.some(c=>c.nombre===histSel)?'Tocá un día azul para ver el certificado.':''});
+  const lista=histSel?diasDeSel():[];
   const tbody=$('tablaHist').querySelector('tbody');
   tbody.innerHTML='';
   $('emptyHist').style.display=lista.length?'none':'block';
-  let totalH=0;
+  let totalH=0,fich=0,faltas=0,ncert=0;
   lista.slice().reverse().forEach(x=>{
-    if(x.salida)totalH+=horasNum(x.entrada,x.salida);
     const tr=document.createElement('tr');
-    tr.innerHTML='<td>'+fechaCorta(x.dia)+'</td><td><span class="tag tag-in">'+hora(x.entrada)+'</span></td><td>'+(x.salida?'<span class="tag tag-out">'+hora(x.salida)+'</span>':'<span class="badge">sin salida</span>')+'</td><td>'+(x.salida?horasTxt(x.entrada,x.salida):'—')+'</td><td>'+esc(x.sede||'—')+'</td>';
+    if(x.estado==='falta'){
+      faltas++;
+      tr.innerHTML='<td>'+fechaCorta(x.dia)+'</td><td colspan="4"><span class="badge bad">Sin fichar</span></td>';
+    }else if(x.estado==='cert'){
+      ncert++;
+      tr.innerHTML='<td>'+fechaCorta(x.dia)+'</td><td colspan="4"><span class="badge cert">Certificado'+(x.cert.visto?'':' nuevo')+'</span> <button class="btn-mini" data-ver="'+x.cert.id+'">Ver</button>'+(x.cert.nota?' <span class="hint">'+esc(x.cert.nota)+'</span>':'')+'</td>';
+    }else{
+      fich++;
+      const i=x.info;
+      if(i.salida)totalH+=horasNum(i.entrada,i.salida);
+      tr.innerHTML='<td>'+fechaCorta(x.dia)+'</td><td><span class="tag tag-in">'+hora(i.entrada)+'</span></td><td>'+(i.salida?'<span class="tag tag-out">'+hora(i.salida)+'</span>':'<span class="badge">sin salida</span>')+'</td><td>'+(i.salida?horasTxt(i.entrada,i.salida):'—')+'</td><td>'+esc(i.sede||'—')+'</td>';
+    }
     tbody.appendChild(tr);
   });
-  $('histResumen').textContent=histSel?(lista.length+' día'+(lista.length===1?'':'s')+' fichado'+(lista.length===1?'':'s')+', '+totalH.toFixed(1)+' hs en total'):'';
+  $('histResumen').textContent=histSel?(fich+' día'+(fich===1?'':'s')+' fichado'+(fich===1?'':'s')+', '+totalH.toFixed(1)+' hs en total · '+faltas+' sin fichar · '+ncert+' con certificado'):'';
   $('btnExportar').disabled=!lista.length;
+  $('btnExportarTodos').disabled=!pasantesLista.length;
 }
+$('tablaHist').addEventListener('click',e=>{
+  const b=e.target.closest('[data-ver]');if(!b)return;
+  const c=certsRRHH.find(x=>String(x.id)===b.dataset.ver);if(c)verCert(c);
+});
 $('histPasante').onchange=e=>{histSel=e.target.value;calHist=mesActual();cargarHistorial();};
 $('histDesde').onchange=$('histHasta').onchange=renderHistorial;
 
-function exportarHistorial(){
-  const lista=diasFiltrados();
-  if(!lista.length)return;
-  const p=pasantesLista.find(x=>x.nombre===histSel)||{};
-  const celda=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
-  const sep=';';                                        // Excel en español usa ; como separador
-  let csv='Pasante'+sep+'Area'+sep+'Fecha'+sep+'Entrada'+sep+'Salida'+sep+'Horas'+sep+'Sede\n';
-  let tot=0;
-  lista.forEach(x=>{
-    const h=x.salida?horasNum(x.entrada,x.salida):0; tot+=h;
-    csv+=[histSel,p.area||'',fechaCorta(x.dia),hora(x.entrada),x.salida?hora(x.salida):'',x.salida?h.toFixed(2).replace('.',','):'',x.sede||''].map(celda).join(sep)+'\n';
+/* ---- Descargas (CSV) ---- */
+const SEP=';';                                            // Excel en español usa ; como separador
+const celda=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+const CSV_COLS=['Pasante','Area','Fecha','Estado','Entrada','Salida','Horas','Sede','Certificado','Nota'];
+const filaCSV=a=>a.map(celda).join(SEP)+'\n';
+/* Filas de una persona (una por día) + una fila de total. */
+function filasPasante(p,dias,certs,desde,hasta){
+  let csv='',tot=0,fich=0,faltas=0,ncert=0;
+  listaDias(p,dias,certs,desde,hasta).forEach(x=>{
+    const i=x.info||{};
+    const h=(x.estado==='full')?horasNum(i.entrada,i.salida):0;
+    tot+=h;
+    if(x.estado==='falta')faltas++;else if(x.estado==='cert')ncert++;else fich++;
+    csv+=filaCSV([p.nombre,p.area||'',fechaCorta(x.dia),ESTADO_TXT[x.estado],
+      i.entrada?hora(i.entrada):'',i.salida?hora(i.salida):'',x.estado==='full'?h.toFixed(2).replace('.',','):'',i.sede||'',
+      x.cert?'Sí':'',x.cert?x.cert.nota||'':'']);
   });
-  csv+=['TOTAL','','','','',tot.toFixed(2).replace('.',','),''].map(celda).join(sep)+'\n';
-  const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});   // BOM para que Excel respete tildes
+  csv+=filaCSV([p.nombre,p.area||'','TOTAL',fich+' fichados, '+faltas+' faltas, '+ncert+' con certificado','','',tot.toFixed(2).replace('.',','),'','','']);
+  return csv;
+}
+function descargarBlob(blob,nombre){
   const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  const slug=histSel.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'_');
-  a.href=url;a.download='historial_'+slug+'_'+hoyKey()+'.csv';a.click();
+  const a=document.createElement('a');a.href=url;a.download=nombre;a.click();
   setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
+function descargarCSV(csv,nombre){
+  descargarBlob(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}),nombre);   // BOM para que Excel respete tildes
+}
+const slug=t=>String(t).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+
+function exportarHistorial(){
+  if(!histSel)return;
+  const p=pasantesLista.find(x=>x.nombre===histSel);if(!p)return;
+  descargarCSV(filaCSV(CSV_COLS)+filasPasante(p,histDias,certsDe(histSel),$('histDesde').value,$('histHasta').value),'historial_'+slug(histSel)+'_'+hoyKey()+'.csv');
+}
 $('btnExportar').onclick=exportarHistorial;
+
+/* Trae una tabla entera de a 1000 filas (el servidor no devuelve más por consulta). */
+async function traerTodo(tabla,cols){
+  const out=[];
+  for(let i=0;;i+=1000){
+    const {data,error}=await sb.from(tabla).select(cols).order('id').range(i,i+999);
+    if(error)throw error;
+    out.push(...(data||[]));
+    if(!data||data.length<1000)break;
+  }
+  return out;
+}
+async function exportarTodos(){
+  const btn=$('btnExportarTodos'), st=$('exportEstado');
+  btn.disabled=true;msg(st,'Preparando la descarga…');
+  try{
+    const [pas,fich]=await Promise.all([
+      sb.from('pasantes').select('id,nombre,area,horario,fecha_inicio,fecha_fin,creado_en').order('nombre'),
+      traerTodo('fichajes','*')
+    ]);
+    if(pas.error)throw pas.error;
+    await cargarCerts();
+    const pasantes=pas.data||[];
+    if(!pasantes.length){msg(st,'Todavía no hay pasantes para descargar.','bad');return;}
+    const porNombre={};
+    fich.forEach(f=>(porNombre[f.nombre]||(porNombre[f.nombre]=[])).push(f));
+    const desde=$('histDesde').value, hasta=$('histHasta').value;
+    let csv=filaCSV(CSV_COLS);
+    pasantes.forEach(p=>{csv+=filasPasante(p,agruparDias(porNombre[p.nombre]||[]),certsDe(p.nombre),desde,hasta);});
+    descargarCSV(csv,'historial_todos_los_pasantes_'+hoyKey()+'.csv');
+    msg(st,'Listo: se descargó el historial de '+pasantes.length+' pasante'+(pasantes.length===1?'':'s')+(desde||hasta?' ('+(desde?fechaCorta(desde):'inicio')+' a '+(hasta?fechaCorta(hasta):'hoy')+')':' (todo el historial)')+'.','ok');
+  }catch(e){
+    msg(st,'No se pudo preparar la descarga. Probá de nuevo.','bad');
+  }finally{
+    btn.disabled=false;
+  }
+}
+$('btnExportarTodos').onclick=exportarTodos;
 
 /* ---------- RRHH: sedes (geocerca automática) ---------- */
 let sedesLista=[];
