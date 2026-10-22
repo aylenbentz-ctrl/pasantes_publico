@@ -1374,7 +1374,8 @@ $('btnBorrarCertViejos').onclick=async()=>{
         }
       }catch(e){fallos++;continue;}
       const res=await sb.from('certificados').delete().eq('id',c.id)
-        .lte('hasta',sumarDias(corte,-1)).select('id');
+        .eq('pasante',c.pasante).eq('desde',c.desde).eq('estado',c.estado)
+        .eq('creado_en',c.creado_en).lte('hasta',sumarDias(corte,-1)).select('id');
       if(res.error||!res.data||res.data.length!==1){fallos++;continue;}
       borrados++;
     }
