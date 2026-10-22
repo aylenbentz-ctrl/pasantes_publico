@@ -356,7 +356,7 @@ details.avanzado{margin-top:6px;} details.avanzado summary{cursor:pointer; font-
       </div>
       <div class="row-between">
         <div class="hint" id="histResumen" style="margin:0;"></div>
-        <button class="btn btn-main btn-sm" id="btnExportar">Exportar historial (CSV)</button>
+        <span class="hint">Para exportar este pasante, seleccionalo en «Quiénes» en el panel «Descargar fichadas» de arriba.</span>
       </div>
     </div>
     <div class="hist-grid">
@@ -388,6 +388,21 @@ details.avanzado{margin-top:6px;} details.avanzado summary{cursor:pointer; font-
     </div>
     <div class="empty" id="emptyCert" style="display:none;">No hay certificados en esta lista.</div>
     <div class="hint" id="statusCertRRHH" role="status"></div>
+    <div class="panel" style="margin-top:20px;" id="panelRespaldoCert">
+      <h2 style="margin-bottom:8px;">Certificados de más de 12 meses</h2>
+      <p class="hint" style="margin-bottom:14px;">Recursos Humanos puede respaldar y eliminar los certificados cuyo período finalizó hace más de 12 meses. Primero descargá un ZIP con las fotos/PDF y un listado CSV. No se borra nada automáticamente.</p>
+      <div class="row" style="margin-bottom:10px;">
+        <button type="button" class="btn btn-main btn-sm" id="btnRespaldoCert" disabled>Descargar respaldo ZIP</button>
+        <span class="hint" id="statusRespaldoCert" role="status">Buscando certificados antiguos…</span>
+      </div>
+      <div id="confirmarBorradoCert" hidden>
+        <label class="chk" style="margin-bottom:12px;">
+          <input type="checkbox" id="checkRespaldoCert">
+          Ya abrí el ZIP y comprobé que contiene los certificados y el listado.
+        </label>
+        <button type="button" class="btn btn-bad btn-sm" id="btnBorrarCertViejos" disabled>Eliminar certificados respaldados</button>
+      </div>
+    </div>
   </section>
 
   <!-- ===== RRHH: Sedes ===== -->
@@ -912,28 +927,9 @@ function renderHistorial(){
     tbody.appendChild(tr);
   });
   $('histResumen').textContent=histSel?(lista.length+' día'+(lista.length===1?'':'s')+' fichado'+(lista.length===1?'':'s')+', '+totalH.toFixed(1)+' hs en total'):'';
-  $('btnExportar').disabled=!lista.length;
 }
 $('histPasante').onchange=e=>{histSel=e.target.value;calHist=mesActual();cargarHistorial();};
 $('histDesde').onchange=$('histHasta').onchange=renderHistorial;
-
-function exportarHistorial(){
-  const lista=diasFiltrados();
-  if(!lista.length)return;
-  const p=pasantesLista.find(x=>x.nombre===histSel)||{};
-  const celda=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
-  const sep=';';                                        // Excel en español usa ; como separador
-  let csv='Pasante'+sep+'Area'+sep+'Fecha'+sep+'Entrada'+sep+'Salida'+sep+'Horas'+sep+'Sede\n';
-  let tot=0;
-  lista.forEach(x=>{
-    const h=x.salida?horasNum(x.entrada,x.salida):0; tot+=h;
-    csv+=[histSel,p.area||'',fechaCorta(x.dia),hora(x.entrada),x.salida?hora(x.salida):'',x.salida?h.toFixed(2).replace('.',','):'',x.sede||''].map(celda).join(sep)+'\n';
-  });
-  csv+=['TOTAL','','','','',tot.toFixed(2).replace('.',','),''].map(celda).join(sep)+'\n';
-  const slug=histSel.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'_');
-  bajarCSV('historial_'+slug+'_'+hoyKey()+'.csv',csv);
-}
-$('btnExportar').onclick=exportarHistorial;
 
 function bajarCSV(nombre,csv){
   const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});   // BOM para que Excel respete tildes
@@ -1155,6 +1151,7 @@ async function cargarCertificados(){
     tb.appendChild(tr);
   });
   actualizarPendientes();
+  actualizarDisponiblesCertViejos();
 }
 $('certFiltro').onchange=cargarCertificados;
 $('tablaCert').addEventListener('click',async e=>{
@@ -1190,6 +1187,207 @@ $('rzGuardar').onclick=async e=>{
   const {data,error}=await sb.from('certificados').update({estado:'rechazado',motivo_rechazo:motivo,resuelto_en:new Date().toISOString()}).eq('id',rzId).select();
   if(error||!data||!data.length){msg($('rzStatus'),'No se pudo guardar.','bad');return;}
   $('dlgRechazo').close();msg($('statusCertRRHH'),'Certificado rechazado.','ok');cargarCertificados();
+};
+
+
+/* ---------- RRHH: respaldo y limpieza de certificados (>12 meses) ----------
+   La eliminación NUNCA es automática. Primero se descarga un ZIP y RRHH
+   confirma que abrió y comprobó el contenido antes de habilitar el borrado.
+   Se procesan hasta 50 certificados por lote para limitar el uso de memoria.
+-------------------------------------------------------------------------- */
+const LIMITE_RESPALDO_CERT=50;
+let respaldoCert=null, trabajandoCertViejos=false;
+function fechaCorteCert(){
+  const [y,m,d]=hoyKey().split('-').map(Number);
+  const previo=y-1, ultimoDia=new Date(Date.UTC(previo,m,0)).getUTCDate();
+  return previo+'-'+pad(m)+'-'+pad(Math.min(d,ultimoDia));
+}
+async function obtenerCertViejos(corte){
+  const out=[], PAG=1000, hasta=sumarDias(corte,-1);
+  for(let i=0;;i+=PAG){
+    const {data,error}=await sb.from('certificados')
+      .select('id,pasante,desde,hasta,motivo,detalle,archivo_nombre,archivo_tipo,estado,creado_en')
+      .lte('hasta',hasta).order('id').range(i,i+PAG-1);
+    if(error)throw new Error('No se pudo consultar certificados antiguos.');
+    out.push(...(data||[]));
+    if(!data||data.length<PAG)break;
+  }
+  return out;
+}
+async function actualizarDisponiblesCertViejos(){
+  if(trabajandoCertViejos||!sb||rol!=='rrhh')return;
+  const btn=$('btnRespaldoCert'), st=$('statusRespaldoCert');
+  btn.disabled=true;
+  try{
+    const rows=await obtenerCertViejos(fechaCorteCert());
+    if(trabajandoCertViejos)return;
+    btn.disabled=!rows.length;
+    if(!respaldoCert){
+      msg(st,rows.length
+        ?rows.length+' certificado'+(rows.length===1?'':'s')+' con más de 12 meses. Se respaldan hasta '+LIMITE_RESPALDO_CERT+' por descarga.'
+        :'No hay certificados de más de 12 meses.');
+    }
+  }catch(e){
+    msg(st,'No se pudo consultar la antigüedad de los certificados. Revisá Supabase.','bad');
+  }
+}
+function limpiarConfirmacionRespaldoCert(){
+  respaldoCert=null;
+  $('confirmarBorradoCert').hidden=true;
+  $('checkRespaldoCert').checked=false;
+  $('btnBorrarCertViejos').disabled=true;
+}
+$('checkRespaldoCert').onchange=()=>{
+  $('btnBorrarCertViejos').disabled=trabajandoCertViejos||!respaldoCert||!$('checkRespaldoCert').checked;
+};
+/* ZIP sin compresión, compatible con Windows, sin librerías externas. */
+const CERT_CRC_T=(()=>{
+  const t=[];
+  for(let i=0;i<256;i++){let c=i;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[i]=c>>>0;}
+  return t;
+})();
+function certCRC32(bytes){
+  let c=0xFFFFFFFF;
+  for(const b of bytes)c=CERT_CRC_T[(c^b)&255]^(c>>>8);
+  return (c^0xFFFFFFFF)>>>0;
+}
+function zipRespaldoCert(archivos){
+  const enc=new TextEncoder(), partes=[], central=[];
+  let offset=0,tamCentral=0;
+  if(!archivos.length||archivos.length>65535)throw new Error('Demasiados archivos para ZIP.');
+  for(const a of archivos){
+    const nom=enc.encode(a.nombre),tam=a.datos.length,crc=certCRC32(a.datos);
+    if(nom.length>65535||offset+tam>0xFFFFFFFF)throw new Error('Respaldo demasiado grande.');
+    const h=new DataView(new ArrayBuffer(30));
+    h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint16(6,0x0800,true);
+    h.setUint16(12,0x21,true);h.setUint32(14,crc,true);h.setUint32(18,tam,true);
+    h.setUint32(22,tam,true);h.setUint16(26,nom.length,true);
+    partes.push(h.buffer,nom,a.datos);
+    const z=new DataView(new ArrayBuffer(46));
+    z.setUint32(0,0x02014b50,true);z.setUint16(4,20,true);z.setUint16(6,20,true);
+    z.setUint16(8,0x0800,true);z.setUint16(14,0x21,true);z.setUint32(16,crc,true);
+    z.setUint32(20,tam,true);z.setUint32(24,tam,true);z.setUint16(28,nom.length,true);
+    z.setUint32(42,offset,true);
+    central.push(z.buffer,nom);
+    tamCentral+=46+nom.length;
+    offset+=30+nom.length+tam;
+  }
+  const fin=new DataView(new ArrayBuffer(22));
+  fin.setUint32(0,0x06054b50,true);fin.setUint16(8,archivos.length,true);
+  fin.setUint16(10,archivos.length,true);fin.setUint32(12,tamCentral,true);
+  fin.setUint32(16,offset,true);
+  return new Blob([...partes,...central,fin.buffer],{type:'application/zip'});
+}
+function datosArchivoCert(dataURL){
+  const match=/^data:(image\/(?:jpeg|png|webp)|application\/pdf);base64,([a-z0-9+/=\s]+)$/i.exec(String(dataURL||''));
+  if(!match)throw new Error('Un certificado tiene un archivo inválido.');
+  const bin=atob(match[2].replace(/\s/g,''));
+  if(!bin.length)throw new Error('Un certificado tiene un archivo vacío.');
+  const datos=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++)datos[i]=bin.charCodeAt(i);
+  const ext={'application/pdf':'pdf','image/jpeg':'jpg','image/png':'png','image/webp':'webp'}[match[1].toLowerCase()];
+  return {datos,ext};
+}
+function nombreRespaldoCert(c,ext){
+  const nombre=String(c.pasante||'pasante').normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'').slice(0,42)||'pasante';
+  return nombre+'_'+c.hasta+'_'+c.id+'.'+ext;
+}
+function filaCSVRespaldo(valores){
+  return valores.map(v=>{
+    let s=String(v??'');
+    // Evita que Excel interprete nombres o notas como fórmulas.
+    if(/^[=+\-@\t\r]/.test(s))s="'"+s;
+    return '"'+s.replace(/"/g,'""')+'"';
+  }).join(';')+'\n';
+}
+function descargarRespaldoBlob(blob,nombre){
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=nombre;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+}
+$('btnRespaldoCert').onclick=async()=>{
+  if(trabajandoCertViejos)return;
+  const st=$('statusRespaldoCert'),btn=$('btnRespaldoCert'),corte=fechaCorteCert();
+  trabajandoCertViejos=true;btn.disabled=true;limpiarConfirmacionRespaldoCert();
+  try{
+    const todos=await obtenerCertViejos(corte);
+    if(!todos.length){msg(st,'No quedan certificados con más de 12 meses.');return;}
+    const lote=todos.slice(0,LIMITE_RESPALDO_CERT);
+    if(!confirm('Se preparará un respaldo ZIP de '+lote.length+' certificado'+(lote.length===1?'':'s')+' anterior'+(lote.length===1?'':'es')+' al '+fechaCorta(corte)+'.\n\nNo se borrará ninguno hasta que revises el ZIP y lo confirmes.\n\n¿Descargar respaldo?'))return;
+    const archivos=[],copias=[];
+    let csv='\ufeff'+filaCSVRespaldo(['ID','Pasante','Desde','Hasta','Motivo','Detalle','Estado','Presentado','Archivo original','Archivo dentro del ZIP']);
+    for(let i=0;i<lote.length;i++){
+      const c=lote[i];
+      msg(st,'Preparando respaldo: '+(i+1)+' de '+lote.length+'…');
+      const {data,error}=await sb.from('certificados')
+        .select('id,pasante,desde,hasta,motivo,detalle,estado,creado_en,archivo_nombre,archivo')
+        .eq('id',c.id);
+      if(error||!data||data.length!==1)throw new Error('No se pudo recuperar el certificado '+c.id+'.');
+      const actual=data[0];
+      if(actual.hasta>=corte)throw new Error('Cambió la antigüedad del certificado '+c.id+'.');
+      const {datos,ext}=datosArchivoCert(actual.archivo);
+      const nombre=nombreRespaldoCert(actual,ext);
+      archivos.push({nombre,datos});
+      copias.push({id:actual.id,pasante:actual.pasante,desde:actual.desde,hasta:actual.hasta,
+        estado:actual.estado,creado_en:actual.creado_en,archivo_nombre:actual.archivo_nombre,crc:certCRC32(datos)});
+      csv+=filaCSVRespaldo([actual.id,actual.pasante,actual.desde,actual.hasta,actual.motivo,
+        actual.detalle,actual.estado,actual.creado_en,actual.archivo_nombre,nombre]);
+    }
+    archivos.push({nombre:'listado.csv',datos:new TextEncoder().encode(csv)});
+    descargarRespaldoBlob(zipRespaldoCert(archivos),'certificados_anteriores_a_'+corte+'_'+lote.length+'.zip');
+    respaldoCert={corte,copias};
+    $('confirmarBorradoCert').hidden=false;
+    msg(st,'Respaldo descargado: '+lote.length+' certificado'+(lote.length===1?'':'s')+'. Abrí el ZIP y comprobá que esté completo antes de marcar la casilla.','ok');
+  }catch(e){
+    limpiarConfirmacionRespaldoCert();
+    msg(st,'No se preparó el respaldo y no se borró nada. '+(e.message||'Reintentá.'),'bad');
+  }finally{
+    trabajandoCertViejos=false;
+    actualizarDisponiblesCertViejos();
+  }
+};
+$('btnBorrarCertViejos').onclick=async()=>{
+  if(trabajandoCertViejos||!respaldoCert||!$('checkRespaldoCert').checked)return;
+  const st=$('statusRespaldoCert'),btn=$('btnBorrarCertViejos');
+  const {corte,copias}=respaldoCert;
+  if(corte!==fechaCorteCert()){limpiarConfirmacionRespaldoCert();msg(st,'Cambió la fecha. Generá un respaldo nuevo.','bad');return;}
+  if(!confirm('Vas a ELIMINAR '+copias.length+' certificado'+(copias.length===1?'':'s')+' de Supabase.\n\nAsegurate de haber guardado el ZIP completo. Esta acción NO se puede deshacer.\n\n¿Continuar?'))return;
+  if(prompt('Para confirmar la eliminación definitiva escribí ELIMINAR:')!=='ELIMINAR')return;
+  trabajandoCertViejos=true;btn.disabled=true;$('btnRespaldoCert').disabled=true;
+  let borrados=0,fallos=0;
+  try{
+    for(let i=0;i<copias.length;i++){
+      const c=copias[i];
+      msg(st,'Verificando y eliminando: '+(i+1)+' de '+copias.length+'…');
+      const {data,error}=await sb.from('certificados')
+        .select('id,pasante,desde,hasta,estado,creado_en,archivo_nombre,archivo')
+        .eq('id',c.id);
+      if(error||!data||data.length!==1){fallos++;continue;}
+      const actual=data[0];
+      try{
+        if(actual.pasante!==c.pasante||actual.desde!==c.desde||actual.hasta!==c.hasta||
+           actual.estado!==c.estado||actual.creado_en!==c.creado_en||
+           actual.archivo_nombre!==c.archivo_nombre||
+           actual.hasta>=corte||certCRC32(datosArchivoCert(actual.archivo).datos)!==c.crc){
+          fallos++;continue;
+        }
+      }catch(e){fallos++;continue;}
+      const res=await sb.from('certificados').delete().eq('id',c.id)
+        .lte('hasta',sumarDias(corte,-1)).select('id');
+      if(res.error||!res.data||res.data.length!==1){fallos++;continue;}
+      borrados++;
+    }
+  }catch(e){fallos+=copias.length-borrados-fallos;}
+  finally{
+    trabajandoCertViejos=false;
+    limpiarConfirmacionRespaldoCert();
+    await cargarCertificados();
+    await actualizarDisponiblesCertViejos();
+    msg(st,fallos
+      ?'Se eliminaron '+borrados+' de '+copias.length+'. '+fallos+' no se eliminaron (pudieron cambiar o hubo un error). Conservá el ZIP y prepará otro respaldo antes de reintentar.'
+      :'Se eliminaron '+borrados+' certificado'+(borrados===1?'':'s')+' respaldado'+(borrados===1?'':'s')+'. Conservá el ZIP.',''+(fallos?'bad':'ok'));
+  }
 };
 
 /* ---------- RRHH: sedes (geocerca automática) ---------- */
