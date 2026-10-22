@@ -19,10 +19,12 @@
   class Consulta {
     constructor(table) { this.q = { table, filters: [], op: null }; }
     select(cols) { if (!this.q.op) { this.q.op = 'select'; this.q.cols = cols || '*'; } else this.q.returning = true; return this; }
-    eq(c, v) { this.q.filters.push([c, v]); return this; }
-    order(c) { this.q.order = c; return this; }
-    limit(n) { this.q.limit = n; return this; }
+    eq(c, v) { this.q.filters.push([c, v, 'eq']); return this; }
+    gte(c, v) { this.q.filters.push([c, v, 'gte']); return this; }
+    lte(c, v) { this.q.filters.push([c, v, 'lte']); return this; }
+    order(c) { (this.q.order = this.q.order || []).push(c); return this; }
     range(a, b) { this.q.offset = a; this.q.limit = b - a + 1; return this; }
+    limit(n) { this.q.limit = n; return this; }
     delete() { this.q.op = 'delete'; return this; }
     update(v) { this.q.op = 'update'; this.q.values = v; return this; }
     upsert(v) { this.q.op = 'upsert'; this.q.values = v; return this; }

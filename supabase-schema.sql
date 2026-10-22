@@ -135,7 +135,7 @@ begin
   if not found then return json_build_object('ok', false, 'error', 'pasante_no_encontrado'); end if;
   if v.pin is distinct from p_pin then return json_build_object('ok', false, 'error', 'pin_incorrecto'); end if;
   return json_build_object('ok', true, 'nombre', v.nombre, 'area', v.area, 'horario', v.horario,
-                           'fecha_inicio', v.fecha_inicio, 'fecha_fin', v.fecha_fin, 'creado_en', v.creado_en,
+                           'fecha_inicio', v.fecha_inicio, 'fecha_fin', v.fecha_fin,
                            'sedes', coalesce((select json_agg(s.nombre order by s.nombre) from sedes s where s.id = any(v.sedes_ids)), '[]'::json));
 end;
 $$;
@@ -246,72 +246,106 @@ end;
 $$;
 grant execute on function mis_fichajes(text, text) to anon, authenticated;
 
-
 -- ------------------------------------------------------------
--- Certificados (justificativos de faltas)
--- El pasante los sube desde su calendario, en un día que faltó.
--- El archivo (foto reducida o PDF de hasta ~2 MB) se guarda dentro de la
--- tabla como data URL, así no hace falta configurar Storage.
+-- Editar pasante (solo RRHH). Si cambia el nombre, el historial de
+-- fichadas y los certificados pasan al nombre nuevo en la misma operación.
+-- p_pin vacío = no cambia el PIN.
 -- ------------------------------------------------------------
-create table if not exists certificados (
-  id bigint generated always as identity primary key,
-  nombre text not null,
-  dia date not null,
-  archivo_nombre text,
-  archivo_tipo text not null check (archivo_tipo in ('image/jpeg','image/png','image/webp','application/pdf')),
-  archivo text not null,
-  nota text,
-  subido_en timestamptz not null default now(),
-  visto boolean not null default false,
-  unique (nombre, dia)
-);
-alter table certificados enable row level security;
-
-drop policy if exists "rrhh_lee_certificados"        on certificados;
-drop policy if exists "rrhh_actualiza_certificados"  on certificados;
-drop policy if exists "rrhh_borra_certificados"      on certificados;
-create policy "rrhh_lee_certificados"       on certificados for select using (soy_rrhh());
-create policy "rrhh_actualiza_certificados" on certificados for update using (soy_rrhh()) with check (soy_rrhh());
-create policy "rrhh_borra_certificados"     on certificados for delete using (soy_rrhh());
--- Los pasantes no leen ni escriben la tabla directo: usan las funciones de abajo.
-
-create or replace function subir_certificado(
-  p_nombre text, p_pin text, p_dia date,
-  p_archivo_nombre text, p_archivo_tipo text, p_datos text, p_nota text default null
+create or replace function editar_pasante(
+  p_id text, p_nombre text, p_pin text, p_area text, p_horario text,
+  p_inicio date, p_fin date, p_sedes_ids bigint[]
 ) returns json
 language plpgsql security definer set search_path = public
 as $$
 declare
   v pasantes%rowtype;
-  v_hoy date := (now() at time zone 'America/Argentina/Buenos_Aires')::date;
+  v_nuevo text := trim(coalesce(p_nombre, ''));
 begin
-  select * into v from pasantes where lower(trim(nombre)) = lower(trim(p_nombre)) limit 1;
+  if not soy_rrhh() then return json_build_object('ok', false, 'error', 'no_autorizado'); end if;
+  select * into v from pasantes where id = p_id;
   if not found then return json_build_object('ok', false, 'error', 'pasante_no_encontrado'); end if;
-  if v.pin is distinct from p_pin then return json_build_object('ok', false, 'error', 'pin_incorrecto'); end if;
-
-  if p_dia is null then return json_build_object('ok', false, 'error', 'dia_invalido'); end if;
-  if p_dia > v_hoy then return json_build_object('ok', false, 'error', 'dia_futuro'); end if;
-  if p_archivo_tipo not in ('image/jpeg','image/png','image/webp','application/pdf') then
-    return json_build_object('ok', false, 'error', 'tipo_invalido');
-  end if;
-  if p_datos is null or left(p_datos, length('data:' || p_archivo_tipo || ';base64,')) <> 'data:' || p_archivo_tipo || ';base64,' then
-    return json_build_object('ok', false, 'error', 'archivo_invalido');
-  end if;
-  if length(p_datos) > 3000000 then return json_build_object('ok', false, 'error', 'archivo_grande'); end if;
-  if exists (select 1 from fichajes where nombre = v.nombre and dia = p_dia and tipo = 'entrada') then
-    return json_build_object('ok', false, 'error', 'ya_ficho');
+  if v_nuevo = '' then return json_build_object('ok', false, 'error', 'nombre_vacio'); end if;
+  if coalesce(p_pin, '') <> '' and p_pin !~ '^[0-9]{4,6}$' then return json_build_object('ok', false, 'error', 'pin_invalido'); end if;
+  if p_inicio is not null and p_fin is not null and p_fin < p_inicio then return json_build_object('ok', false, 'error', 'fechas_invalidas'); end if;
+  if coalesce(array_length(p_sedes_ids, 1), 0) = 0 then return json_build_object('ok', false, 'error', 'sin_sede'); end if;
+  if exists (select 1 from pasantes where id <> p_id and lower(trim(nombre)) = lower(v_nuevo)) then
+    return json_build_object('ok', false, 'error', 'nombre_duplicado');
   end if;
 
-  insert into certificados(nombre, dia, archivo_nombre, archivo_tipo, archivo, nota)
-  values (v.nombre, p_dia, left(coalesce(p_archivo_nombre, 'certificado'), 120), p_archivo_tipo, p_datos, left(coalesce(p_nota, ''), 300))
-  on conflict (nombre, dia) do update
-    set archivo_nombre = excluded.archivo_nombre, archivo_tipo = excluded.archivo_tipo, archivo = excluded.archivo,
-        nota = excluded.nota, subido_en = now(), visto = false;   -- al reemplazarlo vuelve a figurar como nuevo
+  update pasantes set nombre = v_nuevo,
+         pin = case when coalesce(p_pin, '') = '' then pin else p_pin end,
+         area = p_area, horario = p_horario, fecha_inicio = p_inicio, fecha_fin = p_fin, sedes_ids = p_sedes_ids
+   where id = p_id;
 
-  return json_build_object('ok', true);
+  if v.nombre is distinct from v_nuevo then
+    update fichajes set nombre = v_nuevo where nombre = v.nombre;
+    update certificados set pasante = v_nuevo where pasante = v.nombre;
+  end if;
+  return json_build_object('ok', true, 'nombre', v_nuevo);
 end;
 $$;
-grant execute on function subir_certificado(text, text, date, text, text, text, text) to anon, authenticated;
+grant execute on function editar_pasante(text, text, text, text, text, date, date, bigint[]) to authenticated;
+
+-- ------------------------------------------------------------
+-- Certificados (justificativos de falta). El pasante sube una foto/PDF
+-- y RRHH la aprueba o la rechaza (con motivo). El archivo se guarda
+-- dentro de la tabla (data URL); la app achica las fotos antes de subir.
+-- ------------------------------------------------------------
+create table if not exists certificados (
+  id bigint generated always as identity primary key,
+  pasante text not null,
+  desde date not null,
+  hasta date not null,
+  motivo text not null,
+  detalle text,
+  archivo_nombre text,
+  archivo_tipo text,
+  archivo text not null,
+  estado text not null default 'pendiente' check (estado in ('pendiente','aprobado','rechazado')),
+  motivo_rechazo text,
+  creado_en timestamptz not null default now(),
+  resuelto_en timestamptz,
+  check (hasta >= desde),
+  check (estado <> 'rechazado' or coalesce(trim(motivo_rechazo), '') <> '')
+);
+create index if not exists certificados_estado_idx on certificados (estado, creado_en desc);
+create index if not exists certificados_pasante_idx on certificados (pasante);
+alter table certificados enable row level security;
+
+drop policy if exists "rrhh_cert_select" on certificados;
+drop policy if exists "rrhh_cert_update" on certificados;
+drop policy if exists "rrhh_cert_delete" on certificados;
+create policy "rrhh_cert_select" on certificados for select using (soy_rrhh());
+create policy "rrhh_cert_update" on certificados for update using (soy_rrhh()) with check (soy_rrhh());
+create policy "rrhh_cert_delete" on certificados for delete using (soy_rrhh());
+-- (sin policy de insert: los pasantes suben solo con subir_certificado)
+
+create or replace function subir_certificado(
+  p_nombre text, p_pin text, p_desde date, p_hasta date, p_motivo text,
+  p_detalle text, p_archivo_nombre text, p_archivo text
+) returns json
+language plpgsql security definer set search_path = public
+as $$
+declare v pasantes%rowtype; v_id bigint;
+begin
+  select * into v from pasantes where lower(trim(nombre)) = lower(trim(p_nombre)) limit 1;
+  if not found or v.pin is distinct from p_pin then return json_build_object('ok', false, 'error', 'credenciales'); end if;
+  if p_desde is null or p_hasta is null or p_hasta < p_desde then return json_build_object('ok', false, 'error', 'fechas_invalidas'); end if;
+  if p_archivo is null or p_archivo !~ '^data:(image/(jpeg|png|webp)|application/pdf);base64,' then
+    return json_build_object('ok', false, 'error', 'archivo_invalido');
+  end if;
+  if length(p_archivo) > 2000000 then return json_build_object('ok', false, 'error', 'archivo_grande'); end if;
+  if (select count(*) from certificados where pasante = v.nombre) >= 30 then
+    return json_build_object('ok', false, 'error', 'demasiados_certificados');
+  end if;
+  insert into certificados(pasante, desde, hasta, motivo, detalle, archivo_nombre, archivo_tipo, archivo)
+  values (v.nombre, p_desde, p_hasta, left(coalesce(nullif(trim(p_motivo), ''), 'Otro'), 60), left(coalesce(p_detalle, ''), 200),
+          left(coalesce(p_archivo_nombre, ''), 120), substring(p_archivo from 6 for position(';' in p_archivo) - 6), p_archivo)
+  returning id into v_id;
+  return json_build_object('ok', true, 'id', v_id);
+end;
+$$;
+grant execute on function subir_certificado(text, text, date, date, text, text, text, text) to anon, authenticated;
 
 create or replace function mis_certificados(p_nombre text, p_pin text)
 returns json
@@ -320,16 +354,49 @@ as $$
 declare v pasantes%rowtype;
 begin
   select * into v from pasantes where lower(trim(nombre)) = lower(trim(p_nombre)) limit 1;
-  if not found or v.pin is distinct from p_pin then
-    return json_build_object('ok', false, 'error', 'credenciales');
-  end if;
+  if not found or v.pin is distinct from p_pin then return json_build_object('ok', false, 'error', 'credenciales'); end if;
   return json_build_object('ok', true, 'certificados', coalesce((
-    select json_agg(json_build_object('dia', c.dia, 'archivo_nombre', c.archivo_nombre, 'nota', c.nota, 'subido_en', c.subido_en, 'visto', c.visto) order by c.dia)
-      from certificados c where c.nombre = v.nombre
+    select json_agg(json_build_object('id', c.id, 'desde', c.desde, 'hasta', c.hasta, 'motivo', c.motivo, 'detalle', c.detalle,
+                                      'archivo_nombre', c.archivo_nombre, 'estado', c.estado, 'motivo_rechazo', c.motivo_rechazo,
+                                      'creado_en', c.creado_en, 'resuelto_en', c.resuelto_en) order by c.creado_en desc)
+      from certificados c where c.pasante = v.nombre
   ), '[]'::json));
 end;
 $$;
 grant execute on function mis_certificados(text, text) to anon, authenticated;
+
+create or replace function mi_certificado_archivo(p_nombre text, p_pin text, p_id bigint)
+returns json
+language plpgsql security definer set search_path = public
+as $$
+declare v pasantes%rowtype; c certificados%rowtype;
+begin
+  select * into v from pasantes where lower(trim(nombre)) = lower(trim(p_nombre)) limit 1;
+  if not found or v.pin is distinct from p_pin then return json_build_object('ok', false, 'error', 'credenciales'); end if;
+  select * into c from certificados where id = p_id and pasante = v.nombre;
+  if not found then return json_build_object('ok', false, 'error', 'no_encontrado'); end if;
+  return json_build_object('ok', true, 'archivo', c.archivo, 'archivo_nombre', c.archivo_nombre);
+end;
+$$;
+grant execute on function mi_certificado_archivo(text, text, bigint) to anon, authenticated;
+
+-- El pasante puede borrar sus certificados salvo los ya aprobados.
+create or replace function borrar_certificado(p_nombre text, p_pin text, p_id bigint)
+returns json
+language plpgsql security definer set search_path = public
+as $$
+declare v pasantes%rowtype; c certificados%rowtype;
+begin
+  select * into v from pasantes where lower(trim(nombre)) = lower(trim(p_nombre)) limit 1;
+  if not found or v.pin is distinct from p_pin then return json_build_object('ok', false, 'error', 'credenciales'); end if;
+  select * into c from certificados where id = p_id and pasante = v.nombre;
+  if not found then return json_build_object('ok', false, 'error', 'no_encontrado'); end if;
+  if c.estado = 'aprobado' then return json_build_object('ok', false, 'error', 'aprobado_no_se_borra'); end if;
+  delete from certificados where id = p_id;
+  return json_build_object('ok', true);
+end;
+$$;
+grant execute on function borrar_certificado(text, text, bigint) to anon, authenticated;
 
 -- ------------------------------------------------------------
 -- Realtime (para que el panel se actualice solo):
