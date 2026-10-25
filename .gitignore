@@ -1,5 +1,37 @@
-data.json
-data.json.tmp
+# Runtime data, attendance records and medical attachments
+/data.json
+/data.json.*
+/uploads/
+/backups/
+*.bak
+*.backup
+*.sqlite*
+*.db
+*.dump
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+/config.js
+*.pem
+*.key
+*.p12
+*.pfx
+.npmrc
+
+# Dependencies, generated files and local tools
 node_modules/
-.DS_Store
+coverage/
+dist/
+work/
+outputs/
+playwright-report/
+test-results/
 *.log
+*.zip
+.DS_Store
+Thumbs.db
+Desktop.ini
+.idea/
+.vscode/

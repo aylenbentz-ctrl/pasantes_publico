@@ -195,6 +195,7 @@ dialog .checks{flex-direction:column; margin-bottom:14px;}
 details.avanzado{margin-top:6px;} details.avanzado summary{cursor:pointer; font-weight:600; font-size:14px; color:var(--muted); padding:6px 0 12px;}
 @media (prefers-reduced-motion: reduce){ #splash *{animation:none !important;} .btn{transition:none;} }
 </style>
+<link rel="stylesheet" href="design.css">
 </head>
 <body>
 
@@ -209,6 +210,7 @@ details.avanzado{margin-top:6px;} details.avanzado summary{cursor:pointer; font-
   <div class="login-brand">
     <div class="logo-box login-logo" data-logo></div>
     <p>Registro de entrada y salida de pasantes</p>
+    <span class="login-caption">Tu jornada, en un mismo lugar.</span>
   </div>
   <form class="login-form" id="formLogin" autocomplete="on">
     <h1>Iniciar sesión</h1>
@@ -494,8 +496,8 @@ details.avanzado{margin-top:6px;} details.avanzado summary{cursor:pointer; font-
    la seguridad real la dan las políticas RLS del archivo
    supabase-schema.sql, no el hecho de ocultar esta key.
    ============================================================ */
-const SUPABASE_URL = "https://mxwyiiltvmcxayjwrqof.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_lHXjfWCanYeJqCuPSucX7A__3I2Rp0Y";
+const SUPABASE_URL = window.FICHAJE_SUPABASE?.url || "";
+const SUPABASE_ANON_KEY = window.FICHAJE_SUPABASE?.publishableKey || "";
 
 /* Archivo del logo: copiá el logo oficial de la empresa en esta carpeta
    con este nombre (PNG o SVG renombrado a .png no sirve: usá la extensión real). */
@@ -511,8 +513,8 @@ let sb=null;
 try{
   if(window.FICHAJE_LOCAL){
     sb = window.createLocalClient();          // servidor Node de prueba (server.js)
-  }else if(SUPABASE_URL.includes('TU-PROYECTO') || SUPABASE_ANON_KEY.includes('TU-ANON-KEY')){
-    console.warn('Falta configurar SUPABASE_URL y SUPABASE_ANON_KEY en index.html');
+  }else if(!SUPABASE_URL || !SUPABASE_ANON_KEY || SUPABASE_URL.includes('TU-PROYECTO') || SUPABASE_ANON_KEY.includes('TU-ANON-KEY')){
+    console.warn('Falta configurar Supabase en config.js (ver config.example.js)');
   }else{
     sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   }

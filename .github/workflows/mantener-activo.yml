@@ -21,11 +21,18 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Consultar la base de datos
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
         run: |
-          # La URL y la clave "publishable" ya son públicas (están en index.html); no son secretas.
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_PUBLISHABLE_KEY" ]; then
+            echo "Supabase no configurado; se omite la consulta."
+            exit 0
+          fi
+          # Configuración del repositorio; no incluir credenciales en el workflow.
           code=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 60 \
-            -X POST "https://mxwyiiltvmcxayjwrqof.supabase.co/rest/v1/rpc/soy_rrhh" \
-            -H "apikey: sb_publishable_lHXjfWCanYeJqCuPSucX7A__3I2Rp0Y" \
+            -X POST "${SUPABASE_URL}/rest/v1/rpc/soy_rrhh" \
+            -H "apikey: ${SUPABASE_PUBLISHABLE_KEY}" \
             -H "Content-Type: application/json" -d '{}')
           echo "Respuesta de Supabase: $code"
           test "$code" = "200"
