@@ -1,8 +1,8 @@
 // Service worker mínimo: solo cachea la interfaz estática (HTML/CSS/JS/íconos)
 // para que el navegador pueda "instalar" la app. Los datos siempre se piden
 // en vivo a Supabase, no se guardan offline.
-const CACHE = 'fichaje-shell-compacto-2';
-const SHELL = ['./', './index.html', './design.css?v=compacto-2', './manifest.webmanifest', './icon-192.png', './icon-512.png', './logo.png'];
+const CACHE = 'fichaje-shell-tabla-sedes-3';
+const SHELL = ['./', './index.html', './design.css?v=tabla-sedes-3', './manifest.webmanifest', './icon-192.png', './icon-512.png', './logo.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)));

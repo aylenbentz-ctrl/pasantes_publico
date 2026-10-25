@@ -195,7 +195,7 @@ dialog .checks{flex-direction:column; margin-bottom:14px;}
 details.avanzado{margin-top:6px;} details.avanzado summary{cursor:pointer; font-weight:600; font-size:14px; color:var(--muted); padding:6px 0 12px;}
 @media (prefers-reduced-motion: reduce){ #splash *{animation:none !important;} .btn{transition:none;} }
 </style>
-<link rel="stylesheet" href="design.css?v=compacto-2">
+<link rel="stylesheet" href="design.css?v=tabla-sedes-3">
 </head>
 <body>
 
@@ -794,7 +794,7 @@ async function cargarPasantesAdmin(){
   pasantesLista.forEach(v=>{
     const tr=document.createElement('tr');
     tr.innerHTML='<td>'+esc(v.nombre)+'</td><td>'+esc(v.area||'—')+'</td><td>'+esc((v.sedes_ids||[]).map(i=>nombreSede[i]).filter(Boolean).join(', ')||'Sin sede')+'</td><td>'+esc(v.horario||'—')+'</td><td>'+esc(v.fecha_inicio||'—')+'</td><td>'+esc(v.fecha_fin||'—')+
-      '</td><td style="white-space:nowrap;"><button class="btn-mini" data-editar="'+esc(v.id)+'">Editar</button> <button class="btn-mini" data-sedes="'+esc(v.id)+'">Sedes</button> <button class="btn-mini" data-hist="'+esc(v.nombre)+'">Historial</button> <button class="btn-mini danger" data-del="'+esc(v.id)+'" data-nombre="'+esc(v.nombre)+'">Eliminar</button></td>';
+      '</td><td class="pasante-acciones"><div class="pasante-botones"><button class="btn-mini" data-editar="'+esc(v.id)+'">Editar</button> <button class="btn-mini" data-sedes="'+esc(v.id)+'">Sedes</button> <button class="btn-mini" data-hist="'+esc(v.nombre)+'">Historial</button> <button class="btn-mini danger" data-del="'+esc(v.id)+'" data-nombre="'+esc(v.nombre)+'">Eliminar</button></div></td>';
     tbody.appendChild(tr);
   });
 }
@@ -972,6 +972,11 @@ function crearExcelFichadas(filas,areas,desde,hasta){
   const text=(col,row,value,style=0)=>`<c r="${col}${row}" s="${style}" t="inlineStr"><is><t xml:space="preserve">${xml(value)}</t></is></c>`;
   const num=(col,row,value,style)=>`<c r="${col}${row}" s="${style}"><v>${value}</v></c>`;
   const fecha=k=>k.split('-').reverse().join('/');
+  const sedeCorta=valor=>{
+    const nombre=String(valor||'').replace(/^Autos del Sur\s*/i,'').trim();
+    const clave=nombre.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+    return ({roca:'ROCA',sarandi:'SARANDÍ',quilmes:'QUILMES','florencio varela':'VARELA',varela:'VARELA'})[clave]||nombre;
+  };
   const titulo='FICHADA DE PASANTES   '+(desde===hasta?fecha(desde):fecha(desde)+' AL '+fecha(hasta));
   let rows=`<row r="1" ht="25" customHeight="1">${text('A',1,titulo,1)}</row><row r="2" ht="8" customHeight="1"/><row r="3" ht="22" customHeight="1">`;
   ['NOMBRE Y APELLIDOS','ÁREA','FECHA','ENTRADA','SALIDA','SEDE'].forEach((v,i)=>rows+=text('ABCDEF'[i],3,v,2));rows+='</row>';
@@ -980,7 +985,7 @@ function crearExcelFichadas(filas,areas,desde,hasta){
   for(const f of filas){
     if(prev&&prev!==f.dia){rows+=`<row r="${r++}" ht="12" customHeight="1"/>`;}
     const day=(Date.parse(f.dia+'T00:00:00Z')-Date.UTC(1899,11,30))/86400000;
-    rows+=`<row r="${r}" ht="20" customHeight="1">`+text('A',r,f.n)+text('B',r,areas[f.n]||'')+num('C',r,day,3)+num('D',r,tiempo(f.entrada),4)+(f.salida?num('E',r,tiempo(f.salida),4):text('E',r,''))+text('F',r,f.sede||'')+'</row>';r++;prev=f.dia;
+    rows+=`<row r="${r}" ht="20" customHeight="1">`+text('A',r,f.n)+text('B',r,areas[f.n]||'')+num('C',r,day,3)+num('D',r,tiempo(f.entrada),4)+(f.salida?num('E',r,tiempo(f.salida),4):text('E',r,''))+text('F',r,sedeCorta(f.sede))+'</row>';r++;prev=f.dia;
   }
   const ns='http://schemas.openxmlformats.org/spreadsheetml/2006/main';
   const files={
