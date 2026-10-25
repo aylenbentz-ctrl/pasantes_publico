@@ -194,6 +194,46 @@ dialog .checks{flex-direction:column; margin-bottom:14px;}
 .s-estado a{color:var(--ford);}
 details.avanzado{margin-top:6px;} details.avanzado summary{cursor:pointer; font-weight:600; font-size:14px; color:var(--muted); padding:6px 0 12px;}
 @media (prefers-reduced-motion: reduce){ #splash *{animation:none !important;} .btn{transition:none;} }
+
+/* ---------- Pulido visual ---------- */
+:root{ --sombra:0 1px 2px rgba(0,18,58,.06), 0 8px 24px rgba(0,18,58,.05); --radio:14px; }
+.panel{border-radius:var(--radio); box-shadow:var(--sombra); padding:22px;}
+.wrap{background:var(--surface); border:1px solid var(--line); border-radius:var(--radio); box-shadow:var(--sombra); padding:0 18px;}
+.wrap th{padding-top:15px; text-transform:uppercase; letter-spacing:.08em; font-size:11.5px;}
+.wrap tbody tr:last-child td{border-bottom:0;}
+.wrap tbody tr:hover td{background:rgba(36,87,214,.05);}
+.empty{padding:34px 0;}
+.empty::before{content:""; display:block; width:58px; height:34px; margin:0 auto 12px; border:2px solid var(--line); border-radius:50%; box-shadow:0 0 0 6px rgba(36,87,214,.06);}
+.persona{display:flex; align-items:center; gap:10px; font-weight:600; white-space:nowrap;}
+.av{flex:none; width:32px; height:32px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font:600 12px/1 var(--f-head); letter-spacing:.04em; color:#fff; background:var(--c,#2457d6);}
+.sedes-chips{display:flex; flex-wrap:wrap; gap:6px; min-width:140px;}
+.chip-sede{font:600 12px var(--f-head); padding:3px 10px; border-radius:20px; background:rgba(36,87,214,.10); color:var(--ford-deep); white-space:nowrap;}
+.chip-sede.vacia{background:var(--tint-bad); color:var(--bad);}
+.stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin:0 0 24px;}
+.stat{background:var(--surface); border:1px solid var(--line); border-radius:var(--radio); padding:16px 16px 13px; box-shadow:inset 0 3px 0 var(--c,var(--ford)), var(--sombra);}
+.stat b{display:block; font:500 38px/1 var(--f-clock); font-variant-numeric:tabular-nums; margin-bottom:4px;}
+.stat span{font-size:13px; color:var(--muted); font-weight:500;}
+.sec-titulo{display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin:0 0 10px;}
+.sec-titulo small{color:var(--muted); font-size:14px;}
+.pass-wrap{position:relative;}
+.pass-wrap input{padding-right:92px;}
+.pass-wrap button{position:absolute; right:6px; top:6px; height:36px; padding:0 12px; border:0; border-radius:7px; background:transparent; color:var(--ford); font:600 14px var(--f-body); cursor:pointer;}
+.pass-wrap button:hover{background:rgba(36,87,214,.08);}
+.login-brand{position:relative; overflow:hidden;}
+.login-brand > *{position:relative; z-index:1;}
+.login-brand::before,.login-brand::after{content:""; position:absolute; left:50%; border-radius:50%; border:2px solid rgba(255,255,255,.07); aspect-ratio:1.72/1; transform:translateX(-50%); pointer-events:none;}
+.login-brand::before{width:150%; bottom:-34%;}
+.login-brand::after{width:105%; bottom:-20%; border-color:rgba(255,255,255,.05);}
+.login-form h1{font-size:32px;}
+.btn-main{background:linear-gradient(180deg,#1f4bc2,#173fa8); box-shadow:0 2px 8px rgba(23,63,168,.28);}
+.btn-ok{box-shadow:0 2px 8px rgba(23,133,90,.25);}
+.btn:hover:not(:disabled){filter:brightness(1.07);}
+nav.tabs{box-shadow:0 1px 0 var(--line), 0 6px 14px rgba(0,18,58,.04);}
+nav.tabs button{border-radius:8px 8px 0 0;}
+nav.tabs button:hover{color:var(--ink); background:rgba(36,87,214,.05);}
+.bloque > h2{display:flex; align-items:center; gap:10px;}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .chip-sede{color:#a9c1ff; background:rgba(91,140,240,.16);} :root:not([data-theme="light"]) .wrap tbody tr:hover td{background:rgba(91,140,240,.08);} }
+@media (max-width:600px){ .stat b{font-size:32px;} .panel{padding:18px;} }
 </style>
 </head>
 <body>
@@ -216,7 +256,7 @@ details.avanzado{margin-top:6px;} details.avanzado summary{cursor:pointer; font-
     <label for="loginUser">Usuario</label>
     <input id="loginUser" autocomplete="username" autocapitalize="none" placeholder="Nombre y apellido, o email">
     <label for="loginPass">Clave</label>
-    <input id="loginPass" type="password" autocomplete="current-password" placeholder="PIN o contraseña">
+    <div class="pass-wrap"><input id="loginPass" type="password" autocomplete="current-password" placeholder="PIN o contraseña"><button type="button" id="btnVerClave" aria-label="Mostrar la clave" aria-pressed="false">Mostrar</button></div>
     <button class="btn btn-main" id="btnLogin" type="submit" style="width:100%;">Iniciar sesión</button>
     <div id="statusLogin" class="hint" style="margin-top:12px;" role="status"></div>
     <div id="modoLocal" class="hint" hidden>Modo de prueba local: los datos se guardan en tu computadora.</div>
@@ -295,7 +335,8 @@ details.avanzado{margin-top:6px;} details.avanzado summary{cursor:pointer; font-
       <b>Falta la salida</b>
       <div id="listaAlertas"></div>
     </div>
-    <h2 style="margin-bottom:6px;">Fichadas de hoy</h2>
+    <div class="stats" id="statsHoy" aria-label="Resumen de hoy"></div>
+    <div class="sec-titulo"><h2>Fichadas de hoy</h2><small id="fechaHoyTxt"></small></div>
     <div class="wrap">
       <table id="tablaHoy"><thead><tr><th>Pasante</th><th>Área</th><th>Entrada</th><th>Salida</th><th>Horas</th><th>Sede</th></tr></thead><tbody></tbody></table>
     </div>
@@ -344,7 +385,7 @@ details.avanzado{margin-top:6px;} details.avanzado summary{cursor:pointer; font-
         <button type="button" class="chip" data-r="mes">Este mes</button>
         <button type="button" class="chip" data-r="mesant">Mes anterior</button>
       </div>
-      <div class="row"><button class="btn btn-main btn-sm" id="btnDescargar">Descargar CSV</button><span class="hint" id="dlStatus" role="status"></span></div>
+      <div class="row"><button class="btn btn-main btn-sm" id="btnDescargar">Descargar Excel</button><button class="btn btn-ghost btn-sm" id="btnDescargarCsv" type="button">Descargar CSV</button><span class="hint" id="dlStatus" role="status"></span></div>
     </div>
     <div class="panel">
       <h2 style="margin-bottom:16px;">Historial de fichadas</h2>
@@ -521,6 +562,20 @@ try{
 /* ---------- Utilidades ---------- */
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pad=n=>String(n).padStart(2,'0');
+/* Iniciales con color (siempre el mismo para la misma persona) */
+const COLORES_AV=['#2457d6','#173fa8','#0f766e','#6d28d9','#b45309','#be185d','#047857'];
+function avatar(nombre){
+  const p=String(nombre||'?').trim().split(/\s+/);
+  const ini=((p[0]||'?')[0]+(p.length>1?p[p.length-1][0]:'')).toUpperCase();
+  let h=0;for(const c of String(nombre||''))h=(h*31+c.charCodeAt(0))>>>0;
+  return '<span class="av" aria-hidden="true" style="--c:'+COLORES_AV[h%COLORES_AV.length]+'">'+esc(ini)+'</span>';
+}
+const persona=n=>'<span class="persona">'+avatar(n)+esc(n)+'</span>';
+/* "Autos del Sur Sarandí" -> "Sarandí" para las etiquetas */
+function sedeLabel(n){
+  const t=String(n||'').trim(), emp=String(NOMBRE_EMPRESA||'').trim();
+  return emp&&t.toLowerCase().startsWith(emp.toLowerCase())&&t.length>emp.length?t.slice(emp.length).trim():t;
+}
 const hoyKey=()=>new Date().toLocaleDateString('en-CA',{timeZone:TZ});          // AAAA-MM-DD en hora argentina
 const hora=iso=>new Date(iso).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',hourCycle:'h23',timeZone:TZ});
 const fechaCorta=k=>{const [y,m,d]=k.split('-');return d+'/'+m+'/'+y;};
@@ -548,7 +603,7 @@ let realtimeOn=false;
 /* ---------- Pantallas ---------- */
 function mostrarLogin(){
   $('app').hidden=true; $('viewLogin').hidden=false;
-  $('loginPass').value='';
+  $('loginPass').value='';$('loginPass').type='password';$('btnVerClave').textContent='Mostrar';$('btnVerClave').setAttribute('aria-pressed','false');
 }
 function entrarApp(){
   $('viewLogin').hidden=true; $('app').hidden=false;
@@ -565,7 +620,7 @@ function entrarApp(){
   }else{
     $('whoami').textContent=pasanteSes.nombre+(pasanteSes.area?', '+pasanteSes.area:'');
     tickReloj();
-    $('hintSedes').textContent=pasanteSes.sedes.length?'Podés fichar en: '+pasanteSes.sedes.join(', ')+'. Activá la ubicación del teléfono.':'Todavía no tenés una sede asignada. Avisale a Recursos Humanos.';
+    $('hintSedes').textContent=pasanteSes.sedes.length?'Podés fichar en: '+pasanteSes.sedes.map(sedeLabel).join(', ')+'. Activá la ubicación del teléfono.':'Todavía no tenés una sede asignada. Avisale a Recursos Humanos.';
     $('secPasante').hidden=false;
     msg($('status'),'');
     cargarMiCalendario();
@@ -607,6 +662,14 @@ $('formLogin').addEventListener('submit',async e=>{
   }
 });
 
+$('btnVerClave').onclick=()=>{
+  const i=$('loginPass'), ver=i.type==='password';
+  i.type=ver?'text':'password';
+  $('btnVerClave').textContent=ver?'Ocultar':'Mostrar';
+  $('btnVerClave').setAttribute('aria-pressed',ver);
+  $('btnVerClave').setAttribute('aria-label',ver?'Ocultar la clave':'Mostrar la clave');
+  i.focus();
+};
 $('btnSalir').onclick=async()=>{
   if(rol==='rrhh'&&sb)await sb.auth.signOut();
   rol=null;pasanteSes=null;
@@ -788,9 +851,11 @@ async function cargarPasantesAdmin(){
   const tbody=$('tablaPasantes').querySelector('tbody');
   tbody.innerHTML='';
   $('emptyPasantes').style.display=pasantesLista.length?'none':'block';
+  $('tablaPasantes').closest('.wrap').style.display=pasantesLista.length?'':'none';
   pasantesLista.forEach(v=>{
     const tr=document.createElement('tr');
-    tr.innerHTML='<td>'+esc(v.nombre)+'</td><td>'+esc(v.area||'—')+'</td><td>'+esc((v.sedes_ids||[]).map(i=>nombreSede[i]).filter(Boolean).join(', ')||'Sin sede')+'</td><td>'+esc(v.horario||'—')+'</td><td>'+esc(v.fecha_inicio||'—')+'</td><td>'+esc(v.fecha_fin||'—')+
+    const chips=(v.sedes_ids||[]).map(i=>nombreSede[i]).filter(Boolean).map(n=>'<span class="chip-sede">'+esc(sedeLabel(n))+'</span>').join('')||'<span class="chip-sede vacia">Sin sede</span>';
+    tr.innerHTML='<td>'+persona(v.nombre)+'</td><td>'+esc(v.area||'—')+'</td><td><div class="sedes-chips">'+chips+'</div></td><td>'+esc(v.horario||'—')+'</td><td>'+esc(v.fecha_inicio||'—')+'</td><td>'+esc(v.fecha_fin||'—')+
       '</td><td style="white-space:nowrap;"><button class="btn-mini" data-editar="'+esc(v.id)+'">Editar</button> <button class="btn-mini" data-sedes="'+esc(v.id)+'">Sedes</button> <button class="btn-mini" data-hist="'+esc(v.nombre)+'">Historial</button> <button class="btn-mini danger" data-del="'+esc(v.id)+'" data-nombre="'+esc(v.nombre)+'">Eliminar</button></td>';
     tbody.appendChild(tr);
   });
@@ -841,15 +906,23 @@ function renderHoy(rows){
   const names=Object.keys(porNombre).sort();
   tbody.innerHTML='';
   $('emptyHoy').style.display=names.length?'none':'block';
+  $('tablaHoy').closest('.wrap').style.display=names.length?'':'none';
   const sinSalida=[];
   names.forEach(n=>{
     const r=porNombre[n];
     const ubic=(r.lat!=null)?('<a href="https://maps.google.com/?q='+r.lat+','+r.lng+'" target="_blank" rel="noopener">'+esc(r.sede||'Ver mapa')+'</a>'):'—';
     if(r.entrada&&!r.salida)sinSalida.push(n);
     const tr=document.createElement('tr');
-    tr.innerHTML='<td>'+esc(n)+'</td><td>'+esc(areaDe[n]||'—')+'</td><td>'+(r.entrada?'<span class="tag tag-in">'+hora(r.entrada)+'</span>':'—')+'</td><td>'+(r.salida?'<span class="tag tag-out">'+hora(r.salida)+'</span>':'—')+'</td><td>'+(r.entrada&&r.salida?horasTxt(r.entrada,r.salida):'—')+'</td><td>'+ubic+'</td>';
+    tr.innerHTML='<td>'+persona(n)+'</td><td>'+esc(areaDe[n]||'—')+'</td><td>'+(r.entrada?'<span class="tag tag-in">'+hora(r.entrada)+'</span>':'—')+'</td><td>'+(r.salida?'<span class="tag tag-out">'+hora(r.salida)+'</span>':'—')+'</td><td>'+(r.entrada&&r.salida?horasTxt(r.entrada,r.salida):'—')+'</td><td>'+ubic+'</td>';
     tbody.appendChild(tr);
   });
+  const hoyK=hoyKey();
+  const activos=pasantesLista.filter(p=>(!p.fecha_inicio||p.fecha_inicio<=hoyK)&&(!p.fecha_fin||p.fecha_fin>=hoyK));
+  const presentes=sinSalida.length, salieron=names.filter(n=>porNombre[n].entrada&&porNombre[n].salida).length;
+  const faltan=activos.filter(p=>!porNombre[p.nombre]).length;
+  const tarj=(num,txt,col,id)=>'<div class="stat" style="--c:'+col+'"><b'+(id?' id="'+id+'"':'')+'>'+num+'</b><span>'+txt+'</span></div>';
+  $('statsHoy').innerHTML=tarj(presentes,presentes===1?'trabajando ahora':'trabajando ahora','var(--ok)')+tarj(salieron,salieron===1?'ya terminó':'ya terminaron','var(--ford)')+tarj(faltan,'todavía sin fichar','var(--warn)')+tarj(nCertPend,nCertPend===1?'certificado por revisar':'certificados por revisar','var(--bad)','statCert');
+  {const t=new Date().toLocaleDateString('es-AR',{timeZone:TZ,weekday:'long',day:'numeric',month:'long'});$('fechaHoyTxt').textContent=t.charAt(0).toUpperCase()+t.slice(1);}
   if(sinSalida.length){
     $('alertaCard').style.display='block';
     $('listaAlertas').textContent=sinSalida.join(', ')+' todavía no marcaron la salida de hoy.';
@@ -963,11 +1036,87 @@ async function traerFichajes(desde,hasta,nombre){
   }
   return out;
 }
-async function descargarFichadas(){
+/* ---- Excel (.xlsx) con el formato de la planilla impresa ----
+   Un solo archivo, sin librerías: el .xlsx es un ZIP con unos pocos XML (se arma con el mismo ZIP del respaldo). */
+const XLSX_MIME='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+const xmlEsc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g,'');
+const sinTildes=t=>String(t).normalize('NFD').replace(/[̀-ͯ]/g,'');
+/* "Autos del Sur Sarandí" -> "SARANDI" (como en la planilla) */
+function sedeCorta(n){
+  let t=String(n||'').trim();
+  const emp=sinTildes(NOMBRE_EMPRESA).toLowerCase();
+  if(sinTildes(t).toLowerCase().startsWith(emp))t=t.slice(NOMBRE_EMPRESA.length).trim();
+  return sinTildes(t||n||'').toUpperCase();
+}
+function tituloPeriodo(desde,hasta){
+  const [y1,m1,d1]=desde.split('-').map(Number), [y2,m2,d2]=hasta.split('-').map(Number);
+  const mes=(y,m)=>new Date(Date.UTC(y,m-1,1)).toLocaleDateString('es-AR',{month:'long',timeZone:'UTC'}).toUpperCase();
+  if(desde===hasta)return d1+' DE '+mes(y1,m1);
+  if(y1===y2&&m1===m2)return mes(y1,m1)+' DEL '+d1+' AL '+d2;
+  return 'DEL '+pad(d1)+'/'+pad(m1)+(y1!==y2?'/'+y1:'')+' AL '+pad(d2)+'/'+pad(m2)+(y1!==y2?'/'+y2:'');
+}
+const colLetra=i=>String.fromCharCode(65+i);
+function xlsxFichadas(filas,areaDe,desde,hasta){
+  const serialDia=k=>{const [y,m,d]=k.split('-').map(Number);return Date.UTC(y,m-1,d)/86400000+25569;};
+  const serialHora=iso=>{const [h,m]=hora(iso).split(':').map(Number);return (h*60+m)/1440;};
+  const txt=(r,c,v,st)=>'<c r="'+colLetra(c)+r+'" s="'+st+'" t="inlineStr"><is><t xml:space="preserve">'+xmlEsc(v)+'</t></is></c>';
+  const num=(r,c,v,st)=>'<c r="'+colLetra(c)+r+'" s="'+st+'"><v>'+v+'</v></c>';
+  const vacia=(r,c,st)=>'<c r="'+colLetra(c)+r+'" s="'+st+'"/>';
+  let r=1, xml='';
+  xml+='<row r="1" ht="30" customHeight="1">'+txt(1,0,'FICHADA DE PASANTES    '+tituloPeriodo(desde,hasta),1)+[1,2,3,4,5].map(c=>vacia(1,c,1)).join('')+'</row>';
+  r=2;
+  xml+='<row r="2" ht="22" customHeight="1">'+['NOMBRE Y APELLIDOS','ÁREA','FECHA','ENTRADA','SALIDA','SEDE'].map((h,c)=>txt(2,c,h,c<2?2:3)).join('')+'</row>';
+  let diaPrev=null;
+  filas.forEach(x=>{
+    if(diaPrev&&x.dia!==diaPrev){r++;}                                  // renglón en blanco entre un día y otro
+    diaPrev=x.dia;r++;
+    xml+='<row r="'+r+'">'+txt(r,0,x.n,4)+txt(r,1,areaDe[x.n]||'',4)+num(r,2,serialDia(x.dia),5)+num(r,3,serialHora(x.entrada),6)+
+      (x.salida?num(r,4,serialHora(x.salida),6):vacia(r,4,6))+txt(r,5,sedeCorta(x.sede),7)+'</row>';
+  });
+  const ult=r;
+  const hoja='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetPr><pageSetUpPr fitToPage="1"/></sheetPr><dimension ref="A1:F'+ult+'"/>'+
+    '<sheetViews><sheetView workbookViewId="0" showGridLines="0"><pane ySplit="2" topLeftCell="A3" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="18"/>'+
+    '<cols><col min="1" max="1" width="30" customWidth="1"/><col min="2" max="2" width="20" customWidth="1"/><col min="3" max="3" width="13" customWidth="1"/><col min="4" max="5" width="11" customWidth="1"/><col min="6" max="6" width="14" customWidth="1"/></cols>'+
+    '<sheetData>'+xml+'</sheetData><mergeCells count="1"><mergeCell ref="A1:F1"/></mergeCells><pageMargins left="0.5" right="0.5" top="0.6" bottom="0.6" header="0.3" footer="0.3"/><pageSetup paperSize="9" orientation="portrait" fitToWidth="1" fitToHeight="0"/></worksheet>';
+  const estilos='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'+
+    '<numFmts count="2"><numFmt numFmtId="164" formatCode="dd/mm/yyyy"/><numFmt numFmtId="165" formatCode="hh:mm"/></numFmts>'+
+    '<fonts count="3"><font><sz val="11"/><name val="Calibri"/><family val="2"/></font><font><b/><sz val="11"/><color rgb="FF00123A"/><name val="Calibri"/><family val="2"/></font><font><b/><sz val="15"/><color rgb="FF00123A"/><name val="Calibri"/><family val="2"/></font></fonts>'+
+    '<fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF9DC3E6"/><bgColor indexed="64"/></patternFill></fill></fills>'+
+    '<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left/><right/><top/><bottom style="medium"><color rgb="FF9DC3E6"/></bottom><diagonal/></border></borders>'+
+    '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'+
+    '<cellXfs count="8"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'+
+    '<xf numFmtId="0" fontId="2" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1"><alignment horizontal="left" vertical="center" indent="1"/></xf>'+
+    '<xf numFmtId="0" fontId="1" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center" indent="1"/></xf>'+
+    '<xf numFmtId="0" fontId="1" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>'+
+    '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment horizontal="left" vertical="center" indent="1"/></xf>'+
+    '<xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>'+
+    '<xf numFmtId="165" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>'+
+    '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf></cellXfs>'+
+    '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
+  const enc=new TextEncoder(), A=(nombre,t)=>({nombre,datos:enc.encode(t)});
+  const X='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+  const blob=zipRespaldoCert([
+    A('[Content_Types].xml',X+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>'),
+    A('_rels/.rels',X+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'),
+    A('xl/workbook.xml',X+'<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><bookViews><workbookView/></bookViews><sheets><sheet name="Fichadas" sheetId="1" r:id="rId1"/></sheets></workbook>'),
+    A('xl/_rels/workbook.xml.rels',X+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>'),
+    A('xl/styles.xml',estilos),
+    A('xl/worksheets/sheet1.xml',hoja)
+  ]);
+  return new Blob([blob],{type:XLSX_MIME});
+}
+function bajarBlob(nombre,blob){
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=nombre;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
+async function descargarFichadas(formato){
   const st=$('dlStatus'), desde=$('dlDesde').value, hasta=$('dlHasta').value, quien=$('dlScope').value;
   if(!desde||!hasta){msg(st,'Elegí las dos fechas.','bad');return;}
   if(desde>hasta){msg(st,'“Desde” no puede ser posterior a “Hasta”.','bad');return;}
-  $('btnDescargar').disabled=true;msg(st,'Preparando…');
+  $('btnDescargar').disabled=$('btnDescargarCsv').disabled=true;msg(st,'Preparando…');
   try{
     const rows=await traerFichajes(desde,hasta,quien);
     const porNombre={};
@@ -977,23 +1126,29 @@ async function descargarFichadas(){
     Object.keys(porNombre).forEach(n=>Object.values(agruparDias(porNombre[n])).forEach(x=>{if(x.entrada)filas.push({n,...x});}));
     filas.sort((a,b)=>a.dia<b.dia?-1:a.dia>b.dia?1:a.n.localeCompare(b.n,'es'));
     if(!filas.length){msg(st,'No hay fichadas en esas fechas.','bad');return;}
-    const celda=v=>'"'+String(v??'').replace(/"/g,'""')+'"', sep=';';
-    let csv=['Pasante','Area','Fecha','Entrada','Salida','Horas','Sede'].join(sep)+'\n', tot=0;
-    filas.forEach(x=>{
-      const h=x.salida?horasNum(x.entrada,x.salida):0;tot+=h;
-      csv+=[x.n,areaDe[x.n]||'',fechaCorta(x.dia),hora(x.entrada),x.salida?hora(x.salida):'',x.salida?h.toFixed(2).replace('.',','):'',x.sede||''].map(celda).join(sep)+'\n';
-    });
-    csv+=['TOTAL','','','','',tot.toFixed(2).replace('.',','),''].map(celda).join(sep)+'\n';
     const slug=quien?quien.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'_'):'todos';
-    bajarCSV('fichadas_'+slug+'_'+(desde===hasta?desde:desde+'_a_'+hasta)+'.csv',csv);
-    msg(st,filas.length+' fila'+(filas.length===1?'':'s')+' descargada'+(filas.length===1?'':'s')+'.','ok');
+    const base='fichadas_'+slug+'_'+(desde===hasta?desde:desde+'_a_'+hasta);
+    if(formato==='csv'){
+      const celda=v=>'"'+String(v??'').replace(/"/g,'""')+'"', sep=';';
+      let csv=['Pasante','Area','Fecha','Entrada','Salida','Horas','Sede'].join(sep)+'\n', tot=0;
+      filas.forEach(x=>{
+        const h=x.salida?horasNum(x.entrada,x.salida):0;tot+=h;
+        csv+=[x.n,areaDe[x.n]||'',fechaCorta(x.dia),hora(x.entrada),x.salida?hora(x.salida):'',x.salida?h.toFixed(2).replace('.',','):'',x.sede||''].map(celda).join(sep)+'\n';
+      });
+      csv+=['TOTAL','','','','',tot.toFixed(2).replace('.',','),''].map(celda).join(sep)+'\n';
+      bajarCSV(base+'.csv',csv);
+    }else{
+      bajarBlob(base+'.xlsx',xlsxFichadas(filas,areaDe,filas[0].dia,filas[filas.length-1].dia));   // el título usa los días que realmente tienen fichadas
+    }
+    msg(st,filas.length+' fichada'+(filas.length===1?'':'s')+' descargada'+(filas.length===1?'':'s')+'.','ok');
   }catch(e){
     msg(st,'No se pudo descargar. Probá de nuevo.','bad');
   }finally{
-    $('btnDescargar').disabled=false;
+    $('btnDescargar').disabled=$('btnDescargarCsv').disabled=false;
   }
 }
-$('btnDescargar').onclick=descargarFichadas;
+$('btnDescargar').onclick=()=>descargarFichadas('xlsx');
+$('btnDescargarCsv').onclick=()=>descargarFichadas('csv');
 
 /* ---------- RRHH: editar pasante ---------- */
 let editPas=null;
@@ -1122,10 +1277,12 @@ $('certEnviar').onclick=async e=>{
 
 /* ---------- RRHH: gestor de certificados ---------- */
 let certRows=[], rzId=null;
+let nCertPend=0;
 async function actualizarPendientes(){
   if(!sb||rol!=='rrhh')return;
   const {data}=await sb.from('certificados').select('id').eq('estado','pendiente');
   const n=(data||[]).length;
+  nCertPend=n;{const e=$('statCert');if(e){e.textContent=n;e.nextElementSibling.textContent=n===1?'certificado por revisar':'certificados por revisar';}}
   $('cntCert').textContent=n;$('cntCert').hidden=!n;
   $('alertaCert').style.display=n?'block':'none';
   $('textoAlertaCert').textContent=n?(n===1?'Hay 1 certificado pendiente.':'Hay '+n+' certificados pendientes.'):'';
@@ -1141,9 +1298,10 @@ async function cargarCertificados(){
   const tb=$('tablaCert').querySelector('tbody');
   tb.innerHTML='';
   $('emptyCert').style.display=certRows.length?'none':'block';
+  $('tablaCert').closest('.wrap').style.display=certRows.length?'':'none';
   certRows.forEach(c=>{
     const tr=document.createElement('tr');
-    tr.innerHTML='<td>'+esc(c.pasante)+'</td><td>'+esc(periodoTxt(c.desde,c.hasta))+'</td><td>'+esc(c.motivo)+(c.detalle?'<div class="hint">'+esc(c.detalle)+'</div>':'')+'</td><td>'+badgeEstado(c.estado)+(c.estado==='rechazado'&&c.motivo_rechazo?'<div class="hint">'+esc(c.motivo_rechazo)+'</div>':'')+'</td><td>'+fechaHoraCorta(c.creado_en)+'</td>'+
+    tr.innerHTML='<td>'+persona(c.pasante)+'</td><td>'+esc(periodoTxt(c.desde,c.hasta))+'</td><td>'+esc(c.motivo)+(c.detalle?'<div class="hint">'+esc(c.detalle)+'</div>':'')+'</td><td>'+badgeEstado(c.estado)+(c.estado==='rechazado'&&c.motivo_rechazo?'<div class="hint">'+esc(c.motivo_rechazo)+'</div>':'')+'</td><td>'+fechaHoraCorta(c.creado_en)+'</td>'+
       '<td style="white-space:nowrap;"><button class="btn-mini" data-cver="'+c.id+'">Ver</button> '+
       (c.estado!=='aprobado'?'<button class="btn-mini" data-capr="'+c.id+'" style="color:var(--ok);border-color:var(--ok);">Aprobar</button> ':'')+
       (c.estado!=='rechazado'?'<button class="btn-mini danger" data-crech="'+c.id+'">Rechazar</button> ':'')+
