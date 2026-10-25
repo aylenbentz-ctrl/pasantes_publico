@@ -195,7 +195,7 @@ dialog .checks{flex-direction:column; margin-bottom:14px;}
 details.avanzado{margin-top:6px;} details.avanzado summary{cursor:pointer; font-weight:600; font-size:14px; color:var(--muted); padding:6px 0 12px;}
 @media (prefers-reduced-motion: reduce){ #splash *{animation:none !important;} .btn{transition:none;} }
 </style>
-<link rel="stylesheet" href="design.css">
+<link rel="stylesheet" href="design.css?v=compacto-2">
 </head>
 <body>
 
@@ -1720,7 +1720,7 @@ if(window.FICHAJE_LOCAL)$('modoLocal').hidden=false;
 /* Registra el service worker para que la app sea instalable (PWA) */
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('sw.js').catch(()=>{});
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(()=>{});
   });
 }
 
