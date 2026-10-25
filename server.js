@@ -295,7 +295,7 @@ function avisar(table) { oyentes.forEach(res => res.write('data: ' + JSON.string
 
 /* ---------------- HTTP ---------------- */
 const ESTATICOS = {
-  'index.html': 'text/html; charset=utf-8', 'sw.js': 'text/javascript; charset=utf-8',
+  'design.css': 'text/css; charset=utf-8', 'index.html': 'text/html; charset=utf-8', 'sw.js': 'text/javascript; charset=utf-8',
   'local-client.js': 'text/javascript; charset=utf-8', 'manifest.webmanifest': 'application/manifest+json',
   'logo.png': 'image/png', 'icon-192.png': 'image/png', 'icon-512.png': 'image/png'
 };
